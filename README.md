@@ -98,7 +98,7 @@ The last line shows the here the name of our device: `ttyUSB0`.
 This device has to be specified with the `-d` option. The KKMoon normally
 works with 115200 baud so you don't have the specify the speed.
 
-## First Test
+## First test
 
 To check whether the engraver gets detected just enter (if using a Windows OS you may have to replace `/dev/ttyUSB0`
 with your port name e.g. `COM3`):
@@ -135,13 +135,13 @@ Perhaps due to another model or other firmware.
 
 If the above things worked fine. We can now try some commands.
 
-###The Fan
+### The fan
 
 The case fan of the KKMoon can be switched on/off with the `--fan/--no-fan` option.
 If not given the state of the fan will remain unchanged.
 The cooling fan on the laser head is always on and can not be switched off with this option.
 
-###Moving the laser
+### Moving the laser
 
 By entering `./engraver.py -v -m 10:10 -d /dev/ttyUSB0` the laser will move by a small amount.
 You see this output:
@@ -160,7 +160,7 @@ You see this output:
 It shows that the laser got moved roughly 0.5 millimeters in x and y direction.
 You can revert this movement by entering: `./engraver.py -v -m -10:-10 -d /dev/ttyUSB0`
 (Due to a bug in an old version of the python argsparse package it can happen, that
-the the negative values aren't regcognized correctly. You can get around this bug by
+the negative values aren't regcognized correctly. You can get around this bug by
 modifying the command slightly:  `./engraver.py -v -m ' -10:-10' -d /dev/ttyUSB0`)
 
 You also can specify the distance in millimeters instead of pixels/steps by adding
@@ -175,29 +175,29 @@ You can also leave out the value for x- or y-direction:
 and `./engraver.py -v -m ' -4mm' -d /dev/ttyUSB0` will only move the laser -4mm in x-direction
 
 
-###Depth and Power
+### Depth and power
 
 With the two parameters depth (-D) and power (-P) you can adjust the final look of the engraving.
-When increasing the depth parameter the laser move more slowly and stays longer at the same point.
-This results in removing more material an a deeper engraving. 
+When increasing the depth parameter the laser moves more slowly and stays longer at the same point.
+This results in removing more material and a deeper engraving. 
 Lowering the power results in a weaker laser beam. I assume the laser is controlled through PWM and so the
 on-time during a cycle is probably decreased.
 
 
-###Home
+### Home
 
 You can move the laser to the home position (0,0) with the `-H` option. But be careful
 the KKMoon has no endswitches and the firmware will drive both stepper motors the full distance
 (89mm) towards the origin. So they eventually will hit the case.
 
-###Showing a moving frame
+### Showing a moving frame
 
 As the original software does you can also show a moving frame to align the workpiece
 before doing the engraving.
 Enter `./engraver.py -v -f 25mm:10mm -d /dev/ttyUSB0` and you see the laser repetitive
 drawing a frame until you hit the return key. 
 
-You can also use you image file you want to engrave to show a frame. Just enter
+You can also use your image file you want to engrave to show a frame. Just enter
 `./engraver.py -F <yourimage> -d /dev/ttyUSB0` and you will an output like this
 
     showing frame x:283px (14.4mm) y:309px (15.7mm)
@@ -214,11 +214,11 @@ It is also possible to restrict the frame to the x- or y-axis by using the `-c` 
 will show a line in x direction in the middle of the y size of the image.
 
 
-###Engraving
+### Engraving
 
-The program contains a function to engrave a checkerboard pattern as test. For example
+The program contains a function to engrave a checkerboard pattern as a test. For example
 if you enter: `./engraver.py --checkerboard 4mm 4 -d /dev/ttyUSB0` it will engrave a checkboard
-pattern 4 by 4 with a tile size of 4mm. You will take a while and you see some output:
+pattern 4 by 4 with a tile size of 4mm. It will take a while and you see some output:
 
     waiting for engraver
     sending data (312 rows) ...
@@ -248,22 +248,22 @@ You see an output like this:
     engraving...
     completed!
 
-Note: you only can shrink your image you cannot enlarge an image with this option.
+Note: you only can shrink your image you cannot enlarge it with this option.
 
-###Engraving Text
+### Engraving text
 
 With the `-t` and the `--font` options you can engrave a text with a given font. Here the `-S` option
 is very useful for setting the maximum height or width of the engraving.
-With the `--font` you must specify a TrueType or OpenType font file. 
+With the `--font` you have to specify a TrueType or OpenType font file. 
 
 The command `./engraver.py -t "Hello!" --font fonts/arial.ttf -S 25mm:10mm -d /dev/ttyUSB0`
-engraves the the word 'Hello' using the font arial.ttf in the subdirectory fonts and the
+engraves the word 'Hello' using the font arial.ttf in the subdirectory fonts and the
 with the maximal dimensions of 25mm in x direction and 10mm in y direction.
 
 I do not provide any fonts with this program. You can find a lot by searching the internet
-for 'open source fonts' or using the one that comes with your OS.
+for 'open source fonts' or using one of those already installed on your OS.
 
-###Transform 
+### Transform 
 
 With the `-T` option you can rotate and/or mirror your image or text before engraving after any other operation.
 You can specify multiple transformation after the option e.g:
@@ -275,15 +275,15 @@ first rotates the text clockwise and afterwards mirrors it about the y axis (fli
 Note: the scaling with `-S` happens *before* tranforming. So in the above example 25mm is the maximal length of
 the text image and 10mm its maximal height.
 
-###Dry Run
+### Dry run
 
-With the `--dry-run` option you can test option without sending any commands to the device. It does not even has
+With the `--dry-run` option you can test options without sending any commands to the device. It does not even has
 to be connected to the computer.
 
-If the a file name is specified with this option and an image or text should be engraved the final image will be saved
-into a file with the given name.
+If a file name is specified with this option and an image or text should be engraved the final image will be saved
+to that file.
 
-##Emergency
+## Emergency
 
 If something go wrong during engraving, hit the interrupt key (Ctrl-c) and the engraving
 will pause. You can abort the process now by hitting the return key or continue it by
