@@ -98,7 +98,7 @@ The last line shows the here the name of our device: `ttyUSB0`.
 This device has to be specified with the `-d` option. The KKMoon normally
 works with 115200 baud so you don't have the specify the speed.
 
-## First Test
+## First test
 
 To check whether the engraver gets detected just enter (if using a Windows OS you may have to replace `/dev/ttyUSB0`
 with your port name e.g. `COM3`):
