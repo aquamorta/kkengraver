@@ -423,16 +423,39 @@ class Engraver(Base):
         m=self.calcFrame(fx,fy,center,centerRef)
         self.move(-m[2],-m[3])
 
+    def calcFrame(self,fx,fy,center,centerRef):
+        m=(0,0)
+        if centerRef:
+            m=(-fx//2,-fy//2)
+            if center=='x':
+                m=(0,-fy//2)
+                fx=1
+            elif center=='y':
+                m=(-fx//2,0)
+                fy=1            
+        else:
+            if center=='x':
+                m=(fx//2,0)
+                fx=1
+            elif center=='y':
+                m=(0,fy//2)
+                fy=1
+        return (m,(fx,fy))
+        
     def frame(self,fx,fy,center,centerRef):
+        m,f=calcFrame(fx,fy,center,centerRef)
+        self.move(*m)
+        self.info("showing frame x:%s y:%s\n",formatUnit(f[0]),formatUnit(f[1]))
         try:
-            self.frameStart(fx,fy,center,centerRef)
+            self.frameStart(*f)
             sys.stdout.write("press return to finish\n")
             sys.stdout.flush()
             sys.stdin.readline()
         finally:
-            engraver.frameStop(fx,fy,center,centerRef)
+            engraver.frameStop()
+        self.move(-m[0],-m[1])
     
-    def burn(self,data,centerRef):
+    def burn(self,data,centerRef=False):
         if centerRef:
             dx,dy=data.size()
             self.move(-dx//2,-dy//2)
