@@ -135,7 +135,7 @@ Perhaps due to another model or other firmware.
 
 If the above things worked fine. We can now try some commands.
 
-### The Fan
+### The fan
 
 The case fan of the KKMoon can be switched on/off with the `--fan/--no-fan` option.
 If not given the state of the fan will remain unchanged.
@@ -175,7 +175,7 @@ You can also leave out the value for x- or y-direction:
 and `./engraver.py -v -m ' -4mm' -d /dev/ttyUSB0` will only move the laser -4mm in x-direction
 
 
-### Depth and Power
+### Depth and power
 
 With the two parameters depth (-D) and power (-P) you can adjust the final look of the engraving.
 When increasing the depth parameter the laser move more slowly and stays longer at the same point.
@@ -250,7 +250,7 @@ You see an output like this:
 
 Note: you only can shrink your image you cannot enlarge an image with this option.
 
-### Engraving Text
+### Engraving text
 
 With the `-t` and the `--font` options you can engrave a text with a given font. Here the `-S` option
 is very useful for setting the maximum height or width of the engraving.
@@ -275,7 +275,7 @@ first rotates the text clockwise and afterwards mirrors it about the y axis (fli
 Note: the scaling with `-S` happens *before* tranforming. So in the above example 25mm is the maximal length of
 the text image and 10mm its maximal height.
 
-### Dry Run
+### Dry run
 
 With the `--dry-run` option you can test option without sending any commands to the device. It does not even has
 to be connected to the computer.
