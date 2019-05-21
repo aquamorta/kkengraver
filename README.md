@@ -178,8 +178,8 @@ and `./engraver.py -v -m ' -4mm' -d /dev/ttyUSB0` will only move the laser -4mm 
 ### Depth and power
 
 With the two parameters depth (-D) and power (-P) you can adjust the final look of the engraving.
-When increasing the depth parameter the laser move more slowly and stays longer at the same point.
-This results in removing more material an a deeper engraving. 
+When increasing the depth parameter the laser moves more slowly and stays longer at the same point.
+This results in removing more material and a deeper engraving. 
 Lowering the power results in a weaker laser beam. I assume the laser is controlled through PWM and so the
 on-time during a cycle is probably decreased.
 
@@ -197,7 +197,7 @@ before doing the engraving.
 Enter `./engraver.py -v -f 25mm:10mm -d /dev/ttyUSB0` and you see the laser repetitive
 drawing a frame until you hit the return key. 
 
-You can also use you image file you want to engrave to show a frame. Just enter
+You can also use your image file you want to engrave to show a frame. Just enter
 `./engraver.py -F <yourimage> -d /dev/ttyUSB0` and you will an output like this
 
     showing frame x:283px (14.4mm) y:309px (15.7mm)
@@ -216,9 +216,9 @@ will show a line in x direction in the middle of the y size of the image.
 
 ### Engraving
 
-The program contains a function to engrave a checkerboard pattern as test. For example
+The program contains a function to engrave a checkerboard pattern as a test. For example
 if you enter: `./engraver.py --checkerboard 4mm 4 -d /dev/ttyUSB0` it will engrave a checkboard
-pattern 4 by 4 with a tile size of 4mm. You will take a while and you see some output:
+pattern 4 by 4 with a tile size of 4mm. It will take a while and you see some output:
 
     waiting for engraver
     sending data (312 rows) ...
@@ -248,20 +248,20 @@ You see an output like this:
     engraving...
     completed!
 
-Note: you only can shrink your image you cannot enlarge an image with this option.
+Note: you only can shrink your image you cannot enlarge it with this option.
 
 ### Engraving text
 
 With the `-t` and the `--font` options you can engrave a text with a given font. Here the `-S` option
 is very useful for setting the maximum height or width of the engraving.
-With the `--font` you must specify a TrueType or OpenType font file. 
+With the `--font` you have to specify a TrueType or OpenType font file. 
 
 The command `./engraver.py -t "Hello!" --font fonts/arial.ttf -S 25mm:10mm -d /dev/ttyUSB0`
 engraves the the word 'Hello' using the font arial.ttf in the subdirectory fonts and the
 with the maximal dimensions of 25mm in x direction and 10mm in y direction.
 
 I do not provide any fonts with this program. You can find a lot by searching the internet
-for 'open source fonts' or using the one that comes with your OS.
+for 'open source fonts' or using one of those already installed on your OS.
 
 ### Transform 
 
@@ -277,11 +277,11 @@ the text image and 10mm its maximal height.
 
 ### Dry run
 
-With the `--dry-run` option you can test option without sending any commands to the device. It does not even has
+With the `--dry-run` option you can test options without sending any commands to the device. It does not even has
 to be connected to the computer.
 
-If the a file name is specified with this option and an image or text should be engraved the final image will be saved
-into a file with the given name.
+If a file name is specified with this option and an image or text should be engraved the final image will be saved
+to that file.
 
 ## Emergency
 
