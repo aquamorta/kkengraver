@@ -127,7 +127,7 @@ If you got something like this (after a timeout):
     [DEBUG]: sending:[10, 0, 4, 0, 255, 0, 4, 0]
     [FATAL]: didn't got acknowledge; got:b''
 
-then the serial device is present, but the the KKMoon engraver could not be detected.
+then the serial device is present, but the KKMoon engraver could not be detected.
 Perhaps due to another model or other firmware.
 
 
@@ -160,7 +160,7 @@ You see this output:
 It shows that the laser got moved roughly 0.5 millimeters in x and y direction.
 You can revert this movement by entering: `./engraver.py -v -m -10:-10 -d /dev/ttyUSB0`
 (Due to a bug in an old version of the python argsparse package it can happen, that
-the the negative values aren't regcognized correctly. You can get around this bug by
+the negative values aren't regcognized correctly. You can get around this bug by
 modifying the command slightly:  `./engraver.py -v -m ' -10:-10' -d /dev/ttyUSB0`)
 
 You also can specify the distance in millimeters instead of pixels/steps by adding
@@ -257,7 +257,7 @@ is very useful for setting the maximum height or width of the engraving.
 With the `--font` you have to specify a TrueType or OpenType font file. 
 
 The command `./engraver.py -t "Hello!" --font fonts/arial.ttf -S 25mm:10mm -d /dev/ttyUSB0`
-engraves the the word 'Hello' using the font arial.ttf in the subdirectory fonts and the
+engraves the word 'Hello' using the font arial.ttf in the subdirectory fonts and the
 with the maximal dimensions of 25mm in x direction and 10mm in y direction.
 
 I do not provide any fonts with this program. You can find a lot by searching the internet
