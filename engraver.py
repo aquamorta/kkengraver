@@ -244,7 +244,7 @@ class EngraverData(Base):
         if im.mode=='P': # convert file with color palette (e.g. gif with transparency)
             im=im.convert('RGBA')
         if im.mode=='RGBA': # replace transparent pixels with white
-            _removeAlpha(im)
+            EngraverData._removeAlpha(im)
         if args.size:
             im.thumbnail(args.size)
             logger.info("image resized to width:%s height:%s\n",formatUnit(im.width),formatUnit(im.height))
