@@ -20,14 +20,19 @@ import argparse
 import sys
 import time
 import re
+import os
 from PIL import Image,ImageDraw,ImageFont
+
+VER = sys.version_info
+if VER[0]<3:
+    aise Exception("at least python version 3 is needed")
 
 ########################################################################
 
 class Logger(object):
     LEVELS={"FATAL":-3,"ERROR":-2,"WARN":-1,"INFO":0,"DEBUG":1}
     
-    def __init__(self,verbosity):
+    def __init__(self,verbosity="WARN"):
         self.verbosity=verbosity
 
     def fatal(self,fmt,*args):
@@ -62,8 +67,9 @@ class Logger(object):
 ########################################################################
 
 class Base(object):
-    def __init__(self,args):
+    def __init__(self,ui,args):
         logger=Logger(args.verbosity)
+        self.ui=ui
         self.lim=args.lim
         self.info=logger.info
         self.debug=logger.debug
@@ -93,6 +99,33 @@ class Base(object):
         data[idx+1]=val&0xff
         
 ########################################################################
+
+class UI(object): # general user interface (CLI / Pipe to GUI
+    def getACK(self):
+        pass
+
+    def ask(self,question):
+        pass
+
+class CommandlineInterface(UI):
+    def getACK(self):
+        sys.stdout.write("press return to finish\n")
+        sys.stdout.flush()
+        sys.stdin.readline()
+    
+    def ask(self,question):
+        pass
+
+class ExternalInterface(UI):
+    def getACK(self):
+        sys.stdout.write("press return to finish\n")
+        sys.stdout.flush()
+        sys.stdin.readline()
+    
+    def ask(self,question):
+        pass
+
+########################################################################
     
 class EngraverData(Base):
     X_IDX=7
@@ -111,8 +144,8 @@ class EngraverData(Base):
     EPILOG1=[0x0a,0x00,0x04,0x00]
     EPILOG2=[0x24,0x00,0x04,0x00,0x24,0x00,0x04,0x00]
     
-    def __init__(self,sizex,sizey,args):
-        Base.__init__(self,args)        
+    def __init__(self,ui,sizex,sizey,args):
+        Base.__init__(self,ui,args)        
         self.header=self.HEADER[:]
         self._size=(sizex,sizey)
         self.setValue(self.header,self.X_IDX,sizex)
@@ -308,8 +341,8 @@ class Engraver(Base):
     CONNECTED=bytes([0x2,0x1,0x4])
     COMPLETED=bytes([0xff,0xff,0xff,0xff])
 
-    def __init__(self,args):
-        Base.__init__(self,args)
+    def __init__(self,ui,args):
+        Base.__init__(self,ui,args)
         self.device=args.device
         self.speed=args.speed
         self.ser=None
@@ -515,6 +548,10 @@ def imageTrf(para):
     if trf==None:
         raise ValueError
     return (para,trf)
+
+########################################################################
+
+    
 
 DESCRIPTION="""
 Engraver program for using a KKMoon laser engraver
