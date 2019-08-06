@@ -25,15 +25,21 @@ from PIL import Image,ImageDraw,ImageFont
 
 VER = sys.version_info
 if VER[0]<3:
-    aise Exception("at least python version 3 is needed")
+    raise Exception("at least python version 3 is needed")
 
 ########################################################################
 
+
+STDOUT=sys.stdout
+STDERR=sys.stderr
+
 class Logger(object):
     LEVELS={"FATAL":-3,"ERROR":-2,"WARN":-1,"INFO":0,"DEBUG":1}
+    LOGGER=None
     
     def __init__(self,verbosity="WARN"):
         self.verbosity=verbosity
+
 
     def fatal(self,fmt,*args):
         self.log("FATAL",fmt,*args)
@@ -55,28 +61,30 @@ class Logger(object):
         lev=self.LEVELS.get(severity,99)
         if self.verbosity>=lev:
             if lev!=0:
-                sys.stderr.write("[%s]: "%severity)
-                sys.stderr.write(fmt % args)
+                STDERR.write("[%s]: "%severity)
+                STDERR.write(fmt % args)
             else:
-                sys.stdout.write(fmt % args)
-                sys.stdout.flush()
+                STDOUT.write(fmt % args)
+                STDOUT.flush()
 
     def logging(self,severity):
         return self.LEVELS.get(severity,99)<=self.verbosity
 
+    @classmethod
+    def set(cls,logger):
+        cls.LOGGER=logger
+
 ########################################################################
 
 class Base(object):
-    def __init__(self,ui,args):
-        logger=Logger(args.verbosity)
-        self.ui=ui
+    def __init__(self,args):
         self.lim=args.lim
-        self.info=logger.info
-        self.debug=logger.debug
-        self.fatal=logger.fatal
-        self.error=logger.error
-        self.warn=logger.warn        
-        self.logging=logger.logging
+        self.info=Logger.LOGGER.info
+        self.debug=Logger.LOGGER.debug
+        self.fatal=Logger.LOGGER.fatal
+        self.error=Logger.LOGGER.error
+        self.warn=Logger.LOGGER.warn        
+        self.logging=Logger.LOGGER.logging
 
     ACK=bytes([0x9])
 
@@ -100,32 +108,6 @@ class Base(object):
         
 ########################################################################
 
-class UI(object): # general user interface (CLI / Pipe to GUI
-    def getACK(self):
-        pass
-
-    def ask(self,question):
-        pass
-
-class CommandlineInterface(UI):
-    def getACK(self):
-        sys.stdout.write("press return to finish\n")
-        sys.stdout.flush()
-        sys.stdin.readline()
-    
-    def ask(self,question):
-        pass
-
-class ExternalInterface(UI):
-    def getACK(self):
-        sys.stdout.write("press return to finish\n")
-        sys.stdout.flush()
-        sys.stdin.readline()
-    
-    def ask(self,question):
-        pass
-
-########################################################################
     
 class EngraverData(Base):
     X_IDX=7
@@ -144,8 +126,8 @@ class EngraverData(Base):
     EPILOG1=[0x0a,0x00,0x04,0x00]
     EPILOG2=[0x24,0x00,0x04,0x00,0x24,0x00,0x04,0x00]
     
-    def __init__(self,ui,sizex,sizey,args):
-        Base.__init__(self,ui,args)        
+    def __init__(self,sizex,sizey,args):
+        Base.__init__(self,args)        
         self.header=self.HEADER[:]
         self._size=(sizex,sizey)
         self.setValue(self.header,self.X_IDX,sizex)
@@ -195,10 +177,10 @@ class EngraverData(Base):
     #
 
     @staticmethod
-    def _trfImage(im,args,logger):
+    def _trfImage(im,args):
         if args.trf:
             for t in args.trf:
-                logger.debug("transforming image:%s\n",t[0])
+                Logger.LOGGER.debug("transforming image:%s\n",t[0])
                 im=im.transpose(t[1])
         return im
 
@@ -213,10 +195,10 @@ class EngraverData(Base):
                 img.putpixel((i%width,i//width),(int(px[0]*w2)+w1,int(px[1]*w2)+w1,int(px[2]*w2)+w1,255))
 
     @staticmethod
-    def _imageToData(im,args,logger):
+    def _imageToData(im,args):
         data=True
         im=im.convert('1',dither=Image.FLOYDSTEINBERG) # to black and white        
-        im=EngraverData._trfImage(im,args,logger)
+        im=EngraverData._trfImage(im,args)
         if args.dummy:
             if args.dummy!=".":
                 im.save(args.dummy)
@@ -241,17 +223,16 @@ class EngraverData(Base):
             if px!=(255,255,255):
                 x=i%img.width
                 y=i//img.width
-                bbox=(min(bbox[0],x),min(bbox[1],y),max(bbox[2],x),max(bbox[3],y))
+                bbox=(min(bbox[0],x-1),min(bbox[1],y-1),max(bbox[2],x+1),max(bbox[3],y+1))
         return img.crop(bbox)
 
     @staticmethod
     def imageFrame(args):
-        logger=Logger(args.verbosity)
         im=Image.open(args.image)
         im.load()
         if args.size:
             im.thumbnail(args.size)
-        im=EngraverData._trfImage(im,args,logger)
+        im=EngraverData._trfImage(im,args)
         return im.size
     
     @staticmethod
@@ -274,36 +255,48 @@ class EngraverData(Base):
 
     
     @staticmethod
-    def fromImage(args):
-        logger=Logger(args.verbosity)
-        im=Image.open(args.image)
-        im.load()
+    def processImage(im,args):
+        if args.size:
+            im.thumbnail(args.size)
+        im=im.convert('1',dither=Image.FLOYDSTEINBERG) # to black and white        
+        im=EngraverData._trfImage(im,args)
+        return im
+
+    @staticmethod
+    def preprocessImage(im):
         if im.mode=='P': # convert file with color palette (e.g. gif with transparency)
             im=im.convert('RGBA')
         if im.mode=='RGBA': # replace transparent pixels with white
             EngraverData._removeAlpha(im)
+        return im
+
+    @staticmethod
+    def fromImage(args):
+        im=Image.open(args.image)
+        im.load()
+        im=EngraverData.preprocessImage(im)
         if args.size:
             im.thumbnail(args.size)
-            logger.info("image resized to width:%s height:%s\n",formatUnit(im.width),formatUnit(im.height))
-        logger.info("preparing image data width:%s height:%s\n",formatUnit(im.width),formatUnit(im.height))
-        return EngraverData._imageToData(im,args,logger)
-                
+            Logger.LOGGER.info("image resized to width:%s height:%s\n",formatUnit(im.width),formatUnit(im.height))
+        Logger.LOGGER.info("preparing image data width:%s height:%s\n",formatUnit(im.width),formatUnit(im.height))
+        return EngraverData._imageToData(im,args)
+
     @staticmethod
-    def fromText(args):
-        logger=Logger(args.verbosity)
+    def imageFromText(args):
         size=tuple(max(s,args.lim) if s==0 else s for s in args.size or (args.lim,args.lim))
         mside=max(size)
-        maxw=min(mside*2,2048)
+        maxw=min(mside*2,3072)
         maxh=min(mside*2,2048)
         im=Image.new("RGB",(maxw,maxh),(255,255,255))
         fsz=12
-        text=" %s "%args.text
+        text="  %s  "%args.text
         while True:
             nfsz=(fsz*12)//10
             font=ImageFont.truetype(args.font,nfsz)
-            sz=font.getsize(args.text)
+            sz=font.getsize(text)
             if sz[0]>maxw or sz[1]>(maxh//2):
                 font=ImageFont.truetype(args.font,fsz)
+                Logger.LOGGER.info("using font:%s\n",font.getname())
                 sz=font.getsize(text)
                 pos=((maxw-sz[0])//2,(maxh-sz[1])//2)
                 break
@@ -312,8 +305,13 @@ class EngraverData(Base):
         draw.text(pos,text,(0,0,0),font)
         im=EngraverData._crop(im)
         im.thumbnail(size)
-        logger.info("text image resized to width:%s height:%s\n",formatUnit(im.width),formatUnit(im.height))
-        return EngraverData._imageToData(im,args,logger)
+        Logger.LOGGER.info("text image resized to width:%s height:%s\n",formatUnit(im.width),formatUnit(im.height))
+        return im
+    
+                
+    @staticmethod
+    def fromText(args):
+        return EngraverData._imageToData(imageFromText(args),args)
     
 
 ########################################################################
@@ -341,14 +339,15 @@ class Engraver(Base):
     CONNECTED=bytes([0x2,0x1,0x4])
     COMPLETED=bytes([0xff,0xff,0xff,0xff])
 
-    def __init__(self,ui,args):
-        Base.__init__(self,ui,args)
+    def __init__(self,args):
+        Base.__init__(self,args)
         self.device=args.device
         self.speed=args.speed
         self.ser=None
         self.opened=False
         self.connected=False
-
+        self.fanOn=True
+        
     def open(self):
         self.debug("opening device %s\n",self.device)
         if self.opened:
@@ -360,6 +359,12 @@ class Engraver(Base):
         except Exception as ex:
             self.fatal("%s\n",ex)
 
+    def isOpened(self):
+        return self.opened
+
+    def isConnected(self):
+        return self.connected
+    
     def close(self):
         if self.opened:
             self.ser.close()
@@ -389,10 +394,15 @@ class Engraver(Base):
             if on:
                 self.debug("switching fan on\n")
                 self.send(self.FAN_ON)
+                self.fanOn=True
             else:
                 self.debug("switching fan off\n")
                 self.send(self.FAN_OFF)
-        
+                self.fanOn=False
+
+    def isFanOn(self):
+        return self.fanOn
+    
     def connect(self):
         self.debug("connecting...\n")
         self.send(self.CONNECT)
@@ -422,25 +432,25 @@ class Engraver(Base):
         self.debug("move finished\n")
         self.info("laser moved x:%s y:%s\n",formatUnit(dx),formatUnit(dy))
         
-    def calcFrame(self,fx,fy,center,centerRef):
-        if centerRef:
-            if center=='x':
+    def calcFrame(self,fx,fy,useCenter,centerAxis):
+        if useCenter:
+            if centerAxis=='x':
                 m=(1,fy,0,-fy//2)
-            elif center=='y':
+            elif centerAxis=='y':
                 m=(fx,1,-fx//2,0)
             else:
                 m=(fx,fy,-fx//2,-fy//2)
         else:
-            if center=='x':
+            if centerAxis=='x':
                 m=(1,fy,fx//2,0)
-            elif center=='y':
+            elif centerAxis=='y':
                 m=(fx,1,0,fy//2)
             else:
                 m=(fx,fy,0,0)
         return m
     
-    def frameStart(self,fx,fy,center,centerRef):
-        m=self.calcFrame(fx,fy,center,centerRef)
+    def frameStart(self,fx,fy,useCenter,centerAxis):
+        m=self.calcFrame(fx,fy,useCenter,centerAxis)
         self.move(m[2],m[3])
         self.info("showing frame x:%s y:%s\n",formatUnit(m[0]),formatUnit(m[1]))
         data=self.FRAME_XY[:]
@@ -450,46 +460,23 @@ class Engraver(Base):
         #self.setValue(data,self.MY_IDX,my)
         self.send(data)
 
-    def frameStop(self,fx,fy,center,centerRef):
+    def frameStop(self,fx,fy,useCenter,centerAxis):
         self.debug("stop showing frame\n")
         self.send(self.FRAME_STOP)
-        m=self.calcFrame(fx,fy,center,centerRef)
+        m=self.calcFrame(fx,fy,useCenter,centerAxis)
         self.move(-m[2],-m[3])
 
-    def calcFrame(self,fx,fy,center,centerRef):
-        m=(0,0)
-        if centerRef:
-            m=(-fx//2,-fy//2)
-            if center=='x':
-                m=(0,-fy//2)
-                fx=1
-            elif center=='y':
-                m=(-fx//2,0)
-                fy=1            
-        else:
-            if center=='x':
-                m=(fx//2,0)
-                fx=1
-            elif center=='y':
-                m=(0,fy//2)
-                fy=1
-        return (m,(fx,fy))
-        
-    def frame(self,fx,fy,center,centerRef):
-        m,f=calcFrame(fx,fy,center,centerRef)
-        self.move(*m)
-        self.info("showing frame x:%s y:%s\n",formatUnit(f[0]),formatUnit(f[1]))
+    def frame(self,fx,fy,useCenter,centerAxis):
         try:
-            self.frameStart(*f)
+            self.frameStart(fx,fy,useCenter,centerAxis)
             sys.stdout.write("press return to finish\n")
             sys.stdout.flush()
             sys.stdin.readline()
         finally:
-            engraver.frameStop()
-        self.move(-m[0],-m[1])
+            engraver.frameStop(fx,fy,useCenter,centerAxis)
     
-    def burn(self,data,centerRef=False):
-        if centerRef:
+    def burn(self,data,useCenter):
+        if useCenter:
             dx,dy=data.size()
             self.move(-dx//2,-dy//2)
         try:
@@ -517,9 +504,19 @@ class Engraver(Base):
                 self.debug("engraving time: %.1f secs\n",time.time()-start)
             self.info(msg)
         finally:
-            if centerRef:
+            if useCenter:
                 self.move(dx//2,dy//2)
-            
+
+    def getACK(self):
+        sys.stdout.write("press return to finish\n")
+        sys.stdout.flush()
+        sys.stdin.readline()
+    
+    def ask(self,question):
+        sys.stdout.write(question)
+        sys.stdout.flush()
+        return sys.stdin.readline()[0].lower()
+
 
 ########################################################################
 STEPS_PER_MM=500./25.4 # 500 DPI
@@ -551,6 +548,8 @@ def imageTrf(para):
 
 ########################################################################
 
+    
+    
     
 
 DESCRIPTION="""
@@ -601,13 +600,13 @@ if __name__ == '__main__':
     #parser.add_argument('-X', help='extended parameter',dest='ext',type=int,default=0) 
     
     args = parser.parse_args()
+    Logger.set(Logger(args.verbosity))
     engraver=Engraver(args)
     if not args.dummy:
         engraver.open()
         engraver.connect()
         engraver.fan(args.fan)
     data=None
-    logger=Logger(args.verbosity)
     
     if args.home:
         engraver.home()
@@ -626,7 +625,7 @@ if __name__ == '__main__':
         if args.font:
             data=EngraverData.fromText(args)
         else:
-            logger.error("no font is given; please use --font to specify a truetype/opentype font\n\n")
+            Logger.LOGGER.error("no font is given; please use --font to specify a truetype/opentype font\n\n")
     if not args.dummy:
         if data:
             if args.fan==None: # switch on while engraving

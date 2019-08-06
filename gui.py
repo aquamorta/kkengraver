@@ -18,22 +18,29 @@
 import sys
 import os
 import json
-import time as otime
 import hashlib
 import base64
 import struct
 import traceback
 import codecs
+import threading
+import queue
+import argparse
+import cgi
+import webbrowser
+import socket
+import time
 
 from select import select
 from http.server import SimpleHTTPRequestHandler,HTTPServer
+from PIL import Image,ImageDraw,ImageFont
+from urllib.parse import parse_qs
+from io import BytesIO
+
+from engraver import Logger,Engraver,EngraverData,DESCRIPTION,unitValue,imageTrf
 
 ##############################################################################
-
-def _print(d):
-    sys.stderr.write("%s\n"%d)
-
-##############################################################################
+FONTDIR='fonts'
 
 STREAM = 0x0
 TEXT = 0x1
@@ -49,17 +56,23 @@ LENGTHLONG = 5
 MASK = 6
 PAYLOAD = 7
 
-MAXHEADER = 65536
-MAXPAYLOAD = 33554432
-
 STATUS_CODES = [1000, 1001, 1002, 1003, 1007, 1008, 1009, 1010, 1011, 3000, 3999, 4000, 4999]
 
+# key value store
+STORAGE={}
+
+def StoreImage(fd):
+    img=Image.open(fd)
+    img.load()
+    img=EngraverData.preprocessImage(img)
+    STORAGE['image']=img
+    
 
 class Websocket(object):
-
-    def __init__(self,socket,master):
+    def __init__(self,socket,registry):
         self.socket=socket
-        self.master=master
+        self.registry=registry
+        self.fileno=socket.fileno
         self.fin = 0
         self.data = bytearray()
         self.opcode = 0
@@ -80,24 +93,25 @@ class Websocket(object):
         self.state = HEADERB1
 
         # restrict the size of header and payload for security reasons
-        self.maxheader = MAXHEADER
-        self.maxpayload = MAXPAYLOAD
-        self.Update()
-        
+        self.maxheader = 65536
+        self.maxpayload = 33554432
+        self.registry.Register(self)
     
-    def DoRead(self,fd):
-        msg=os.read(fd,16384)
+    def DoRead(self):
+        msg=os.read(self.fileno(),16384)
         if msg:
             for d in msg:
-                self.DecodeMessage(ord(d))
+                self.DecodeMessage(d)
         else:
-            os.close(fd)
+            self.DoClose()
+                 
+    def DoClose(self):
+        print ('websocket closed',self.fileno())
+        os.close(self.fileno())
+        self.registry.Unregister(self)
 
         
-    def HandleMessage(self):
-        print ('data',self.data)
-        
-    def Send(self,data):
+    def DoWrite(self,data):
         if isinstance(data, str):
             opcode = TEXT
             data = data.encode('utf-8')
@@ -196,7 +210,7 @@ class Websocket(object):
                   self.frag_buffer.extend(self.data)
                   self.data = self.frag_buffer
 
-              self.HandleMessage()
+              self.registry.Receive(self.data)
 
               self.frag_decoder.reset()
               self.frag_type = BINARY
@@ -218,8 +232,8 @@ class Websocket(object):
                       self.data = self.data.decode('utf8', errors='strict')
                   except Exception as exp:
                       raise Exception('invalid utf-8 payload')
-
-              self.HandleMessage()
+                  
+              self.registry.Receive(self.data)
 
 
     def DecodeMessage(self, byte):
@@ -381,14 +395,12 @@ class Websocket(object):
 
 ##############################################################################
         
-
 class GUIHandler(SimpleHTTPRequestHandler):
 
     def __init__(self,fd,addr,server):
         self.server=server
-        self.master=server.Master()
         self.hand_over=False
-        return SimpleHTTPServer.SimpleHTTPRequestHandler.__init__(self,fd,addr,server)
+        return SimpleHTTPRequestHandler.__init__(self,fd,addr,server)
             
     def handle(self):
         self.close_connection = 1
@@ -408,30 +420,11 @@ class GUIHandler(SimpleHTTPRequestHandler):
         if not self.hand_over:
             self.wfile.close()
             self.rfile.close()
-    
-
 
     def _JSONHeader(self):
         self.send_response(200)
         self.send_header("Content-Type","application/json; charset=utf-8");
         self.end_headers()
-
-    
-    def Files(self,args):
-        self._JSONHeader()
-        songs=[]
-        albums={}
-        self._BuildSongList([Object.Fetch(i) for i in args['p']],songs,albums)
-        self.wfile.write(json.write({'songs':songs,'albums':albums}))
-        
-
-    def Command(self,args):
-        player=self.master.Player()
-        cmd=args['p'][0]
-        cmd=self.cmdtable.get(cmd)
-        if cmd:
-            player.HandleCmd(cmd)
-        self.StatusQuery(args)
 
     def log_message(self, format, *args):
         sys.stderr.write("%s - - [%s] %s\n" %
@@ -463,12 +456,87 @@ class GUIHandler(SimpleHTTPRequestHandler):
             self.send_header("Upgrade","websocket")
             self.end_headers()
             self.server.KeepOpen()
-            ws=Websocket(self.request,self.master)
-            Monitor.Instance().Attach(ws)
-            self.master.AttachScreen(ws)
+            ws=Websocket(self.request,self.server)
         else:
             self.send_error(400,"illegal request")
 
+    def output(self,text,flush=False):
+        self.wfile.write(bytes(text,'utf-8'))
+        if flush:
+            self.wfile.flush()
+        
+    def GetFonts(self,args):
+        fonts=os.listdir(FONTDIR)
+        fonts.sort()
+        digest=hashlib.sha1(bytes(str(fonts),'utf-8')).hexdigest()
+        flist=[]
+        if STORAGE.get('fonthash')!=digest:
+            for f in fonts:
+                try:
+                    fname=ImageFont.truetype('%s/%s'%(FONTDIR,f)).getname()
+                    fname="%s (%s)"%(fname[0],fname[1])
+                    flist.append({'name':fname,'file':f})
+                except:
+                    Logger.LOGGER.error("cannot load font from file '%s'\n",f)
+            STORAGE['fonts']=flist
+            STORAGE['fonthash']=digest
+        self._JSONHeader()
+        self.output(json.dumps(STORAGE['fonts']))
+
+    def SendImage(self,img):
+        self.send_response(200)
+        self.send_header("Pragma-directive","no-cache")
+        self.send_header("Cache-directive","no-cache")
+        self.send_header("Cache-Control","no-store, no-cache, must-revalidate")
+        self.send_header("Content-Type","image/png");
+        self.end_headers()
+        fd = BytesIO()
+        img.save(fd, "png")
+        self.wfile.write(fd.getvalue())
+        self.wfile.flush()
+
+    
+    def RenderImageFromText(self,dict):
+        for p in ['text','font','width','height']:
+            if  p not in dict:
+                self.send_error(404, "parameter '%s' is missing"%p)
+                return
+        hsh=hashlib.sha1()
+        global args 
+        args.text=dict['text'][0]
+        hsh.update(bytes(args.text,'utf-8'))
+        args.size=(unitValue(dict['width'][0]),unitValue(dict['height'][0]))
+        hsh.update(bytes(str(args.size),'utf-8'))
+        args.font="%s/%s"%(FONTDIR,dict['font'][0])
+        hsh.update(bytes(args.font,'utf-8'))
+
+        digest=hsh.hexdigest()
+        if STORAGE.get('imagehash')==digest:
+            img=STORAGE['textimage']
+        else:
+            STORAGE['imagehash']=digest
+            img=EngraverData.imageFromText(args)
+            STORAGE['textimage']=img
+        trf=dict.get('trf',[None])[0]
+        args.trf=None
+        if trf:
+            args.trf=[imageTrf(i) for i in trf.split(' ')]
+        self.SendImage(EngraverData._trfImage(img.copy(),args))
+        
+    def RenderImage(self,dict):
+        for p in ['width','height']:
+            if  p not in dict:
+                self.send_error(404, "parameter '%s' is missing"%p)
+                return
+        global args 
+        args.size=(unitValue(dict['width'][0]),unitValue(dict['height'][0]))
+        trf=dict.get('trf',[None])[0]
+        args.trf=None
+        if trf:
+            args.trf=[imageTrf(i) for i in trf.split(' ')]
+        img=EngraverData.processImage(STORAGE['image'].copy(),args)
+        self.SendImage(img)
+        
     
     def do_GET(self):
         dict={}
@@ -476,43 +544,62 @@ class GUIHandler(SimpleHTTPRequestHandler):
         if len(l)>1: dict=parse_qs(l[1])
         f=self.pathtofunc.get(l[0])
         if not f:
-            if self.path.startswith(CONFIG[sDATADIR]):
-                path=self.path
-                ctype = self.guess_type(path)
-                try:
-                    # Always read in binary mode. Opening files in text mode may cause
-                    # newline translations, making the actual size of the content
-                    # transmitted *less* than the content-length!
-                    f = open(path, 'rb')
-                except IOError:
-                    self.send_error(404, "File not found")
-                    return None
-                try:
-                    self.send_response(200)
-                    self.send_header("Content-type", ctype)
-                    fs = os.fstat(f.fileno())
-                    self.send_header("Content-Length", str(fs[6]))
-                    self.send_header("Last-Modified", self.date_time_string(fs.st_mtime))
-                    self.end_headers()
-                    try:
-                        self.copyfile(f, self.wfile)
-                    finally:
-                        f.close()
-                except:
-                    f.close()
-                    raise
+            self.path='%sweb%s'%(os.sep,self.path)
+            if self.translate_path(self.path).startswith(os.getcwd()+os.sep+'web'):
+                SimpleHTTPRequestHandler.do_GET(self)
             else:
-                self.path='/files%s'%self.path
-                if self.translate_path(self.path).startswith(os.getcwd()+os.sep+'files'):
-                    SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
-                else:
-                    self.send_error(404, "File not found")
+                self.send_error(404, "File not found")
         else:
             f(self,dict)
-                
+
+     
+    def do_POST(self):
+        l=self.path.split('?')
+        f=self.ppathtofunc.get(l[0])
+        if not f:
+            self.send_error(404, "File not found")
+        else:
+            f(self)
+
+    
+    def SaveImage(self):
+        content_length = int(self.headers['Content-Length'])
+        ctype, pdict = cgi.parse_header(self.headers['Content-Type'])
+        if ctype == 'multipart/form-data':
+            encoding='utf-8'
+            errors='replace'
+            boundary = pdict['boundary']
+            ctype = self.headers['Content-Type']
+            headers = cgi.Message()
+            headers.set_type(ctype)
+            headers['Content-Length'] = self.headers['Content-Length']
+            fs = cgi.FieldStorage(self.rfile, headers=headers, encoding=encoding, errors=errors,
+                              environ={'REQUEST_METHOD': 'POST'})
+            try:
+                image=fs['file']
+                data=fs.getlist('file')[0]
+            except:
+                image=None
+            if image!=None:
+                stem,ext=os.path.splitext(image.filename)
+                fd=BytesIO(data)
+                StoreImage(fd)
+                self.send_response(200)
+                self.end_headers()
+            else: 
+                self.send_error(400,"content dispostion `file0` expected\n",'utf-8')
+        else:
+            self.send_error(400,"content type `multipart/form-data` expected\n",'utf-8')
 
     pathtofunc={
-        '/ws'               :CreateWS
+        '/ws':CreateWS,
+        '/fonts':GetFonts,
+        '/textimage':RenderImageFromText,
+        '/image':RenderImage
+        }
+    
+    ppathtofunc={
+        '/image':SaveImage
         }
     
 
@@ -520,15 +607,22 @@ class Httpd(HTTPServer):
 
     allow_reuse_address = True
     
-    def __init__(self,port=8008):
-        HTTPServer.__init__(self,('',port), GUIHandler)
+    def __init__(self,bind,port):
+        HTTPServer.__init__(self,(bind,port), GUIHandler)
+        self.listeners={}
+        self.intervall=0.5
         self.msg=None
         self.do_close=True
-
+        self.messageHandler=lambda p: None
+        self.Register(self)
+        self.lock=threading.Lock()
         
-    def DoRead(self,fd):
+    def DoRead(self):
         self.handle_request()
 
+    def DoWrite(self,msg):
+        pass
+    
     def DoClose(self):
         os.close(self.fileno())
     
@@ -543,21 +637,25 @@ class Httpd(HTTPServer):
         self.do_close=True
 
 
-class Registry(object):
-    def __init__(self):
-        self.listeners={}
-        self.intervall=0.5
-    
     def Register(self,client):
         self.listeners[client.fileno()]=client
 
     def Unregister(self,listener):
-        del self.listeners[listener]
+        if type(listener)!=int:
+            listener=listener.fileno()
+        try:
+            del self.listeners[listener]
+        except:
+            pass
+
+    def SetMessageHandler(self,handler):
+        self.messageHandler=handler
 
     def HandleRead(self,fd):
         self.listeners[fd].DoRead()
 
     def HandleClose(self,fd):
+        print ('close fd %s'%fd)
         client=self.listeners[fd]
         client.DoClose()
         self.Unregister(client)
@@ -573,20 +671,191 @@ class Registry(object):
                 try:
                     self.HandleRead(ready)
                 except Exception as n:
+                    print(n)
                     self.HandleClose(ready)
             for failed in xList:
                 self.HandleClose(ready)
-            
-    
-    
-    
-if __name__ == '__main__':
 
-    httpd = Httpd()
-    print (httpd,httpd.fileno(),type(httpd.fileno()))
-    registry= Registry()
-    registry.Register(httpd)
-    registry.Loop()
+    def Send(self,obj):
+        self.lock.acquire()
+        msg=json.dumps(obj)
+        for client in self.listeners.values():
+            client.DoWrite(msg)
+        self.lock.release()
+
+    def Receive(self,msg):
+        obj=json.loads(msg)
+        self.messageHandler.receive(obj)
+
+class StdoutClient(object):
+    def DoWrite(self,msg):
+        print(msg)
+
+    def DoRead(self):
+        os.read(1,16384)
+
+    def fileno(self): 
+        return 1
+
+class ExternalLogger(Logger):
+    def __init__(self,verbosity,channel):
+        Logger.__init__(self,verbosity)
+        self.success=True
+        self.channel=channel
+        
+    def fatal(self,fmt,*args):
+        self.log("FATAL",fmt,*args)
+
+    def log(self,severity,fmt,*args):
+        lev=self.LEVELS.get(severity,99)
+        if lev<self.LEVELS["WARN"]:
+            self.success=False
+        if self.verbosity>=lev:
+            self.channel.Send({'type':'message','severity':severity,'content':fmt%args})
+
+    def resetError(self):
+        res=self.success
+        self.success=True
+        return res
+
+
+class Worker(threading.Thread):
+    def __init__(self,engraver,channel):
+        self.engraver=engraver
+        self.channel=channel
+        self.doStop=False
+        self.busy=False
+        self.working=False
+        self.centerAxis=None
+        self.useCenter=False
+        self.queue=queue.Queue(1)
+        self.commands={
+            'connect':self.connect,
+            'disconnect':self.disconnect,
+            'fan':Engraver.fan,
+            'home':Engraver.home,
+            'nop':lambda e: None,
+            'move':Engraver.move,
+            'status':lambda e: None,
+            'frameStart':self.frameStart,
+            'frameStop':Engraver.frameStop
+            }
+        threading.Thread.__init__(self)
+        self.setDaemon(True)
+
+    def connect(self,engraver):
+        engraver.open()
+        if engraver.isOpened():
+            engraver.connect()
+            engraver.fan(True)
+            
+    def disconnect(self,engraver):
+        engraver.close()
+    
+    def status(self,engraver):
+        return {'type':'status',
+               'connected':engraver.isOpened(),
+               'working':self.working,
+               'fanOn':engraver.isFanOn(),
+               'success':Logger.LOGGER.resetError(),
+               'centerAxis':self.centerAxis,
+               'useCenter':self.useCenter
+               }
+
+    def frameStart(self,engraver,fx,fy,useCenter,centerAxis):
+        self.centerAxis=centerAxis
+        self.useCenter=useCenter
+        engraver.frameStart(fx,fy,useCenter,centerAxis)
+
+    
+    def run(self):
+        while not self.doStop:
+            msg=self.queue.get()
+            print("msg:%s"%msg)
+            self.busy=True
+            cmd=self.commands.get(msg.get('cmd'))
+            if cmd:
+                res=cmd(self.engraver,**msg.get('args',{}))
+                if res!=None:
+                    self.channel.Send(res)
+            else:
+                Logger.LOGGER.error("unknown command: %s\n",msg.get('cmd'))
+            self.channel.Send(self.status(self.engraver))
+            self.busy=False
+
+    def stop(self):
+        self.doStop=True
+        self.receive({"cmd":"nop"})
+
+    def receive(self,obj):
+        self.queue.put(obj)
+
+
+class UrlOpener(threading.Thread):
+    def __init__(self,bname,host,port):
+        self.port=port
+        self.host=host
+        self.browser=None
+        
+        if not bname:
+            self.browser=webbrowser.get()
+        else:
+            self.browser=webbrowser.get(bname)
+        threading.Thread.__init__(self)
+        self.setDaemon(True)
+
+    def run(self):
+        if not self.browser:
+            Logger.LOGGER.error("could not find webbrowser '%s'",args.browser)
+            return
+        while True:
+            time.sleep(0.1)
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            result = sock.connect_ex((self.host,self.port))
+            if result == 0:
+                sock.close()
+                break
+        self.browser.open_new_tab('http://%s:%s'%(self.host,self.port))
+        
+
+
+
+parser = argparse.ArgumentParser(description=DESCRIPTION,formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+parser.add_argument('-d', '--device',metavar="device",help='the serial device',default="/dev/ttyUSB0")
+parser.add_argument('-s', '--speed',metavar="speed",help='the speed of the serial device',type=int,default=115200)
+parser.add_argument('-v', '--verbosity',help='increase verbosity level ',action='count',default=0)
+parser.add_argument('--limit', help='set maximum no. of steps in x/y direction',metavar=('steps'),dest='lim',type=int,default=1575)
+parser.add_argument('-b', '--browser',metavar="browser",help='use browser to open gui, set to - to not open the gui',default='')
+parser.add_argument('-B', '--bind',metavar="bind",help='use the given address to bind to; use 0.0.0.0 for all interfaces',
+                    default='127.0.0.1')
+
+parser.add_argument('-P', '--port',metavar="port",help='use the given port',
+                    default=8008)
+
+parser.add_argument('-T','--transform',metavar='cw|ccw|turn|tb|lr', help=argparse.SUPPRESS,dest='trf',nargs='+')
+args = parser.parse_args()
+
+if args.bind not in ['0.0.0.0','127.0.0.1']:
+    host=args.bind
+else:
+    host='localhost'
+
+if args.browser!='-':
+    UrlOpener(args.browser,host,args.port).start()
+
+StoreImage('web/logo.png')
+httpd = Httpd(args.bind,args.port)
+httpd.Register(StdoutClient())
+Logger.set(ExternalLogger(args.verbosity,httpd))
+engraver=Engraver(args)
+worker=Worker(engraver,httpd)
+httpd.SetMessageHandler(worker)
+worker.start()
+httpd.Loop()
+
+
+
 
 
 

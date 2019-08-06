@@ -1,0 +1,181 @@
+/* You can add global styles to this file, and also import other style files */
+@import '@angular/material/prebuilt-themes/deeppurple-amber.css';
+@font-face {
+  font-family: 'Material Icons';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Material Icons'),
+    local('MaterialIcons-Regular'),
+    url(assets/MaterialIcons-Regular.ttf) format('truetype');
+}
+
+%text1 {
+    font-family: Roboto,"Helvetica Neue",sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+%text2 {
+    font-family: Roboto,"Helvetica Neue",sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+#log {
+    max-height: 128px;
+    min-height: 128px;
+    overflow-y: scroll;
+}
+
+#dist {
+    align-self: baseline;
+}
+
+#imagegrid {
+    width:100%;
+}
+
+
+div.inline {
+    display: inline-flex;
+}
+
+
+.nopadding, .nopadding .mat-form-field-wrapper{
+    margin-bottom: -1.25em !important;
+    margin-top:-32px;
+}
+
+div.spacer {
+    display: inline-flex;
+    padding-left: 8px;
+    padding-right: 8px;   
+}
+
+div.spacing {
+    padding: 8px;    
+}
+
+mat-icon.over {
+    margin-left:-24px;
+    color:red;
+}
+
+mat-card-header{
+    background: linear-gradient(0deg,#f0f0f0,#f8f8f8) !important;
+}
+
+mat-card-header.mat-card-header{
+    background: transparent;
+}
+
+
+mat-card.mat-card {
+    background: linear-gradient(0deg,#f0f0f0,#f8f8f8) !important;
+    padding: 0px;
+}
+
+mat-card-title {
+    margin-left:8px;
+    margin-top:8px;
+    margin-left:8px;
+}
+
+button.mat-raised-button.icon-button,
+button.mat-button-toggle-button,
+mat-button-toggle.mat-button-toggle-appearance-standard.icon-button .mat-button-toggle-label-content,
+label.mat-raised-button {
+    font-size:14px !important;
+    line-height: 40px;
+    padding: 0 0px;
+    min-width: 40px !important;
+}
+
+mat-icon.in-label {
+    position: relative;
+    top:8px;
+}
+
+.status {
+    padding: 4px;
+    margin:0 4px 0 4px;
+}
+
+.disconnected {
+    color:gray;
+}
+
+.size-input {
+    width:5em;
+}
+
+.size-sm {
+    width:36px;
+}
+
+.size-m {
+    width:72px;
+}
+
+input.distance {
+    text-align: right;    
+}
+
+.b-top figure {
+    border-top:1px rgba(0,0,0,0.22) solid;
+}
+
+.b-left figure {
+    border-left:1px rgba(0,0,0,0.22) solid;
+}
+
+.ok {
+    background-color: green;
+}
+
+.material-icons {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;  /* Preferred icon size */
+  display: inline-block;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
+
+  /* Support for all WebKit browsers. */
+  -webkit-font-smoothing: antialiased;
+  /* Support for Safari and Chrome. */
+  text-rendering: optimizeLegibility;
+
+  /* Support for Firefox. */
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Support for IE. */
+  font-feature-settings: 'liga';
+}
+
+body {
+  @extend %text1;  
+}
+
+
+.afu-select-btn, label.btn, button.btn {
+    font-family: Roboto,"Helvetica Neue",sans-serif !important;
+    font-size: 20px !important;
+    font-weight: 500 !important;
+}
+
+p.constraint-info,span.text-primary {
+    font-family: Roboto,"Helvetica Neue",sans-serif !important;
+    font-size: 18px !important;
+    font-weight: 500 !important;
+}
+
+
+.numericinput {
+    width:4em;
+}

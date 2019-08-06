@@ -1,0 +1,14 @@
+{
+  "/ws": {
+    "target": "http://localhost:8008",
+    "secure": false,
+    "logLevel": "debug",
+    "ws":true
+  },
+  "/**": {
+    "target": "http://localhost:8008",
+    "secure": false,
+    "logLevel": "debug",
+    "changeOrigin": true
+  }
+}
