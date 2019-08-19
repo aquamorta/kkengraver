@@ -114,6 +114,7 @@ class EngraverData(Base):
     def __init__(self,sizex,sizey,args):
         Base.__init__(self,args)        
         self.header=self.HEADER[:]
+        self._size=(sixex,sizey)
         self.setValue(self.header,self.X_IDX,sizex)
         self.setValue(self.header,self.Y_IDX,sizey)
         self.header[self.DEPTH_IDX]=self.limit(args.depth,100,0)
@@ -122,6 +123,9 @@ class EngraverData(Base):
         #self.setValue(self.header,self.EXT2_IDX,self.limit(args.ext,2048,0))
         self.rows=[]
 
+    def size(self):
+        return self._size
+    
     def addRow(self,data):
         row=[0x22,0,0]+data
         self.setValue(row,1,len(row)+1)
@@ -394,50 +398,70 @@ class Engraver(Base):
         self.debug("stop showing frame\n")
         self.send(self.FRAME_STOP)
 
-    def frame(self,fx,fy,center):
+    def calcFrame(self,fx,fy,center,centerRef):
         m=(0,0)
-        if center=='x':
-            m=(fx//2,0)
-            fx=1
-        elif center=='y':
-            m=(0,fy//2)
-            fy=1
+        if centerRef:
+            m=(-fx//2,-fy//2)
+            if center=='x':
+                m=(0,-fy//2)
+                fx=1
+            elif center=='y':
+                m=(-fx//2,0)
+                fy=1            
+        else:
+            if center=='x':
+                m=(fx//2,0)
+                fx=1
+            elif center=='y':
+                m=(0,fy//2)
+                fy=1
+        return (m,(fx,fy))
+        
+    def frame(self,fx,fy,center,centerRef):
+        m,f=calcFrame(fx,fy,center,centerRef)
         self.move(*m)
-        self.info("showing frame x:%s y:%s\n",formatUnit(fx),formatUnit(fy))
+        self.info("showing frame x:%s y:%s\n",formatUnit(f[0]),formatUnit(f[1]))
         try:
-            self.frameStart(fx,fy)
+            self.frameStart(*f)
             sys.stdout.write("press return to finish\n")
             sys.stdout.flush()
             sys.stdin.readline()
-        except KeyboardInterrupt:
-            pass
-        engraver.frameStop()
+        finally:
+            engraver.frameStop()
         self.move(-m[0],-m[1])
     
-    def burn(self,data):
-        data.sendData(self)
-        msg="\rcompleted!\n"
-        self.info("engraving...\n")
-        if self.logging("DEBUG"):
-            start=time.time()
-        while True:
-            try:
-                resp=self.ser.read(4)
-                self.info("\r%02d%% done",resp[3])
-                if resp==self.COMPLETED:
-                    break
-            except KeyboardInterrupt:
-                self.pause()
-                sys.stdout.write("paused! Do you want to cancel the process? (Y/n)")
-                sys.stdout.flush()
-                if sys.stdin.readline()[0].upper()!="N":
-                    self.stop()
-                    msg="\rcanceled!\n"
-                    break
-                self.cont()
-        if self.logging("DEBUG"):
-            self.debug("engraving time: %.1f secs\n",time.time()-start)
-        self.info(msg)
+    def burn(self,data,centerRef=False):
+        if centerRef:
+            dx,dy=data.size()
+            self.move(-dx//2,-dy//2)
+        try:
+            data.sendData(self)
+            msg="\rcompleted!\n"
+            self.info("engraving...\n")
+            if self.logging("DEBUG"):
+                start=time.time()
+            while True:
+                try:
+                    resp=self.ser.read(4)
+                    self.info("\r%02d%% done",resp[3])
+                    if resp==self.COMPLETED:
+                        break
+                except KeyboardInterrupt:
+                    self.pause()
+                    sys.stdout.write("paused! Do you want to cancel the process? (Y/n)")
+                    sys.stdout.flush()
+                    if sys.stdin.readline()[0].upper()!="N":
+                        self.stop()
+                        msg="\rcanceled!\n"
+                        break
+                    self.cont()
+            if self.logging("DEBUG"):
+                self.debug("engraving time: %.1f secs\n",time.time()-start)
+            self.info(msg)
+        finally:
+            if centerRef:
+                self.move(dx//2,dy//2)
+            
 
 ########################################################################
 STEPS_PER_MM=500./25.4 # 500 DPI
@@ -493,6 +517,7 @@ if __name__ == '__main__':
                         dest='center',choices=['x','y'])
     
     parser.add_argument('-H','--home',help='move the laser to pos 0/0',dest='home',default=False,action='store_true')
+    parser.add_argument('-C','--center-reference',help='use the current laser postion as reference point for the center of the image or text to engrave; usually it will be the top-left of the image',dest='centerref',default=False,action='store_true')
     parser.add_argument('-D','--depth',metavar="depth",help='set the burn depth of the laser (0-100)',dest='depth',default=10,type=int)
     parser.add_argument('-P','--power',metavar="power",help='set the laser power (0-100)',dest='power',default=100,type=int)
     parser.add_argument('--checkerboard',help='engrave a quadratic checkerboard pattern of given tile size and number',
