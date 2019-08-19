@@ -301,6 +301,8 @@ class Engraver(Base):
 
     FX_IDX=3
     FY_IDX=5
+    MX_IDX=7
+    MY_IDX=9
     FRAME_XY=[0x20,0x00,0x0b,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00]
     
     CONNECTED=bytes([0x2,0x1,0x4])
@@ -387,48 +389,48 @@ class Engraver(Base):
         self.debug("move finished\n")
         self.info("laser moved x:%s y:%s\n",formatUnit(dx),formatUnit(dy))
         
-    def frameStart(self,fx,fy):
-        self.debug("start showing frame delta_x=%s delta_y=%s\n",formatUnit(fx),formatUnit(fy))
-        data=self.FRAME_XY[:]
-        self.setValue(data,self.FX_IDX,fx)
-        self.setValue(data,self.FY_IDX,fy)
-        self.send(data)
-
-    def frameStop(self):
-        self.debug("stop showing frame\n")
-        self.send(self.FRAME_STOP)
-
     def calcFrame(self,fx,fy,center,centerRef):
-        m=(0,0)
         if centerRef:
-            m=(-fx//2,-fy//2)
             if center=='x':
-                m=(0,-fy//2)
-                fx=1
+                m=(1,fy,0,-fy//2)
             elif center=='y':
-                m=(-fx//2,0)
-                fy=1            
+                m=(fx,1,-fx//2,0)
+            else:
+                m=(fx,fy,-fx//2,-fy//2)
         else:
             if center=='x':
-                m=(fx//2,0)
-                fx=1
+                m=(1,fy,fx//2,0)
             elif center=='y':
-                m=(0,fy//2)
-                fy=1
-        return (m,(fx,fy))
-        
+                m=(fx,1,0,fy//2)
+            else:
+                m=(fx,fy,0,0)
+        return m
+    
+    def frameStart(self,fx,fy,center,centerRef):
+        m=self.calcFrame(fx,fy,center,centerRef)
+        self.move(m[2],m[3])
+        self.info("showing frame x:%s y:%s\n",formatUnit(m[0]),formatUnit(m[1]))
+        data=self.FRAME_XY[:]
+        self.setValue(data,self.FX_IDX,m[0])
+        self.setValue(data,self.FY_IDX,m[1])
+        #self.setValue(data,self.MX_IDX,mx) # don't work with negative values
+        #self.setValue(data,self.MY_IDX,my)
+        self.send(data)
+
+    def frameStop(self,fx,fy,center,centerRef):
+        self.debug("stop showing frame\n")
+        self.send(self.FRAME_STOP)
+        m=self.calcFrame(fx,fy,center,centerRef)
+        self.move(-m[2],-m[3])
+
     def frame(self,fx,fy,center,centerRef):
-        m,f=calcFrame(fx,fy,center,centerRef)
-        self.move(*m)
-        self.info("showing frame x:%s y:%s\n",formatUnit(f[0]),formatUnit(f[1]))
         try:
-            self.frameStart(*f)
+            self.frameStart(fx,fy,center,centerRef)
             sys.stdout.write("press return to finish\n")
             sys.stdout.flush()
             sys.stdin.readline()
         finally:
-            engraver.frameStop()
-        self.move(-m[0],-m[1])
+            engraver.frameStop(fx,fy,center,centerRef)
     
     def burn(self,data,centerRef=False):
         if centerRef:
@@ -555,7 +557,7 @@ if __name__ == '__main__':
         args.image=args.image_frame
         args.frame=EngraverData.imageFrame(args)
     if args.frame:
-        engraver.frame(*args.frame,args.center)
+        engraver.frame(*args.frame,args.center,args.centerref)
     elif args.checker:
         data=EngraverData.checkerboard(args)
     elif args.image:
