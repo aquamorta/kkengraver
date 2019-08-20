@@ -114,7 +114,7 @@ class EngraverData(Base):
     def __init__(self,sizex,sizey,args):
         Base.__init__(self,args)        
         self.header=self.HEADER[:]
-        self._size=(sixex,sizey)
+        self._size=(sizex,sizey)
         self.setValue(self.header,self.X_IDX,sizex)
         self.setValue(self.header,self.Y_IDX,sizey)
         self.header[self.DEPTH_IDX]=self.limit(args.depth,100,0)
@@ -432,7 +432,7 @@ class Engraver(Base):
         finally:
             engraver.frameStop(fx,fy,center,centerRef)
     
-    def burn(self,data,centerRef=False):
+    def burn(self,data,centerRef):
         if centerRef:
             dx,dy=data.size()
             self.move(-dx//2,-dy//2)
@@ -571,7 +571,7 @@ if __name__ == '__main__':
         if data:
             if args.fan==None: # switch on while engraving
                 engraver.fan(True)
-            engraver.burn(data)
+            engraver.burn(data,args.centerref)
         engraver.close()
     if not (args.home or args.move or args.frame or data or args.verbosity or args.fan!=None or args.dummy):
         parser.print_help()
