@@ -20,12 +20,12 @@
                     <mat-grid-tile></mat-grid-tile>
                     <mat-grid-tile class="b-left">
                         <mat-button-toggle-group multiple [(ngModel)]="xyCenter" (change)="frame()">
-                            <mat-button-toggle [disabled]="disabled && xyCenterSaved!='y'" title="Preview y-axis" class="icon-button" [value]="'y'" ><mat-icon style="transform:rotate(90deg)">settings_ethernet</mat-icon></mat-button-toggle>
+                            <mat-button-toggle [disabled]="disabled && xyCenterSaved!='y'" title="Preview y-axis" class="icon-button" [value]="'y'" ><mat-icon>settings_ethernet</mat-icon></mat-button-toggle>
                         </mat-button-toggle-group>
                     </mat-grid-tile>
                     <mat-grid-tile> 
                         <mat-button-toggle-group multiple [(ngModel)]="xyCenter" (change)="frame()">
-                            <mat-button-toggle [disabled]="disabled  && xyCenterSaved!='x'" title="Preview x-axis" class="icon-button" [value]="'x'" ><mat-icon>settings_ethernet</mat-icon></mat-button-toggle>
+                            <mat-button-toggle [disabled]="disabled  && xyCenterSaved!='x'" title="Preview x-axis" class="icon-button" [value]="'x'" ><mat-icon style="transform:rotate(90deg)">settings_ethernet</mat-icon></mat-button-toggle>
                         </mat-button-toggle-group>
                     </mat-grid-tile>
                     <mat-grid-tile>
