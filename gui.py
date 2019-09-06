@@ -30,6 +30,7 @@ import cgi
 import webbrowser
 import socket
 import time
+import re
 
 from select import select
 from http.server import SimpleHTTPRequestHandler,HTTPServer
@@ -464,9 +465,11 @@ class GUIHandler(SimpleHTTPRequestHandler):
         self.wfile.write(bytes(text,'utf-8'))
         if flush:
             self.wfile.flush()
-        
+
+            
     def GetFonts(self,args):
-        fonts=os.listdir(FONTDIR)
+        exp=re.compile("\.(ttf|pfb)$")
+        fonts=list(filter(lambda f: exp.search(f,re.I)!=None,os.listdir(FONTDIR)))
         fonts.sort()
         digest=hashlib.sha1(bytes(str(fonts),'utf-8')).hexdigest()
         flist=[]
