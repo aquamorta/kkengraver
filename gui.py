@@ -31,6 +31,7 @@ import webbrowser
 import socket
 import time
 import re
+import ctypes
 
 from select import select
 from http.server import SimpleHTTPRequestHandler,HTTPServer
@@ -38,7 +39,7 @@ from PIL import Image,ImageDraw,ImageFont
 from urllib.parse import parse_qs
 from io import BytesIO
 
-from engraver import Logger,Engraver,EngraverData,DESCRIPTION,unitValue,imageTrf
+from engraver import Logger,Engraver,EngraverData,DESCRIPTION,unitValue,imageTrf,Ask
 
 ##############################################################################
 FONTDIR='fonts'
@@ -741,7 +742,8 @@ class Worker(threading.Thread):
             'move':Engraver.move,
             'status':lambda e: None,
             'frameStart':self.frameStart,
-            'frameStop':Engraver.frameStop
+            'frameStop':Engraver.frameStop,
+            'burn':self.burn
             }
         threading.Thread.__init__(self)
         self.setDaemon(True)
@@ -770,6 +772,14 @@ class Worker(threading.Thread):
         self.useCenter=useCenter
         engraver.frameStart(fx,fy,useCenter,centerAxis)
 
+    def burn(self,engraver,useCenter,mode):
+        if mode=='image':
+            img=STORAGE['textimage'].copy()
+            img=EngraverData._trfImage(img,args)
+            data=EngraverData._imageToData(img)
+        else:
+            pass
+        BurnThread(engraver,data,useCenter)
     
     def run(self):
         while not self.doStop:
@@ -789,6 +799,7 @@ class Worker(threading.Thread):
     def stop(self):
         self.doStop=True
         self.receive({"cmd":"nop"})
+
 
     def receive(self,obj):
         self.queue.put(obj)
@@ -819,10 +830,30 @@ class UrlOpener(threading.Thread):
                 sock.close()
                 break
         self.browser.open_new_tab('http://%s:%s'%(self.host,self.port))
-        
 
-
-
+class BurnThread(threading.Thread):
+    def __init__(self, engraver,data,useCenter): 
+        threading.Thread.__init__(self) 
+        self.engraver=engraver
+        self.useCenter=useCenter
+        self.data=data
+              
+    def run(self): 
+        engraver.burn(data,useCenter)
+           
+    def get_id(self): 
+        if hasattr(self, '_thread_id'): 
+            return self._thread_id 
+        for id, thread in threading._active.items(): 
+            if thread is self: 
+                return id
+   
+    def pause(self): 
+        thread_id = self.get_id() 
+        res = ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id,ctypes.py_object(KeyboardInterrupt)) 
+        if res > 1: 
+            print('Exception raise failure') 
+       
 parser = argparse.ArgumentParser(description=DESCRIPTION,formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 parser.add_argument('-d', '--device',metavar="device",help='the serial device',default="/dev/ttyUSB0")
