@@ -29,9 +29,16 @@ if VER[0]<3:
 
 ########################################################################
 
-
 STDOUT=sys.stdout
 STDERR=sys.stderr
+
+def _StdAsk(question):
+    sys.stdout.write(question)
+    sys.stdout.write(" (Y/n)\n")
+    sys.stdout.flush()
+    return sys.stdin.readline()[0].lower()!='n'
+
+Ask=_StdAsk
 
 class Logger(object):
     LEVELS={"FATAL":-3,"ERROR":-2,"WARN":-1,"INFO":0,"DEBUG":1}
@@ -493,9 +500,7 @@ class Engraver(Base):
                         break
                 except KeyboardInterrupt:
                     self.pause()
-                    sys.stdout.write("paused! Do you want to cancel the process? (Y/n)")
-                    sys.stdout.flush()
-                    if sys.stdin.readline()[0].upper()!="N":
+                    if Ask("Paused! Do you want to cancel the process?"):
                         self.stop()
                         msg="\rcanceled!\n"
                         break
@@ -507,15 +512,6 @@ class Engraver(Base):
             if useCenter:
                 self.move(dx//2,dy//2)
 
-    def getACK(self):
-        sys.stdout.write("press return to finish\n")
-        sys.stdout.flush()
-        sys.stdin.readline()
-    
-    def ask(self,question):
-        sys.stdout.write(question)
-        sys.stdout.flush()
-        return sys.stdin.readline()[0].lower()
 
 
 ########################################################################
