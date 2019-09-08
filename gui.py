@@ -396,6 +396,12 @@ class Websocket(object):
 
 
 ##############################################################################
+
+def parseTrf(trf):
+    if trf:
+        trf=[imageTrf(i) for i in trf.split(' ')]
+    return trf
+
         
 class GUIHandler(SimpleHTTPRequestHandler):
 
@@ -521,10 +527,7 @@ class GUIHandler(SimpleHTTPRequestHandler):
             STORAGE['imagehash']=digest
             img=EngraverData.imageFromText(args)
             STORAGE['textimage']=img
-        trf=dict.get('trf',[None])[0]
-        args.trf=None
-        if trf:
-            args.trf=[imageTrf(i) for i in trf.split(' ')]
+        args.trf=parseTrf(dict.get('trf',[None])[0])
         self.SendImage(EngraverData._trfImage(img.copy(),args))
         
     def RenderImage(self,dict):
@@ -534,10 +537,7 @@ class GUIHandler(SimpleHTTPRequestHandler):
                 return
         global args 
         args.size=(unitValue(dict['width'][0]),unitValue(dict['height'][0]))
-        trf=dict.get('trf',[None])[0]
-        args.trf=None
-        if trf:
-            args.trf=[imageTrf(i) for i in trf.split(' ')]
+        args.trf=parseTrf(dict.get('trf',[None])[0])
         img=EngraverData.processImage(STORAGE['image'].copy(),args)
         self.SendImage(img)
         
@@ -729,7 +729,8 @@ class Worker(threading.Thread):
         self.channel=channel
         self.doStop=False
         self.busy=False
-        self.working=False
+        self.engraving=False
+        self.framing=False
         self.centerAxis=None
         self.useCenter=False
         self.queue=queue.Queue(1)
@@ -742,7 +743,7 @@ class Worker(threading.Thread):
             'move':Engraver.move,
             'status':lambda e: None,
             'frameStart':self.frameStart,
-            'frameStop':Engraver.frameStop,
+            'frameStop':self.frameStop,
             'burn':self.burn
             }
         threading.Thread.__init__(self)
@@ -760,7 +761,8 @@ class Worker(threading.Thread):
     def status(self,engraver):
         return {'type':'status',
                'connected':engraver.isOpened(),
-               'working':self.working,
+               'engraving':self.engraving,
+               'framing':self.framing,
                'fanOn':engraver.isFanOn(),
                'success':Logger.LOGGER.resetError(),
                'centerAxis':self.centerAxis,
@@ -770,17 +772,27 @@ class Worker(threading.Thread):
     def frameStart(self,engraver,fx,fy,useCenter,centerAxis):
         self.centerAxis=centerAxis
         self.useCenter=useCenter
+        self.framing=True
         engraver.frameStart(fx,fy,useCenter,centerAxis)
 
-    def burn(self,engraver,useCenter,mode):
+    def frameStop(self,engraver,fx,fy,useCenter,centerAxis):
+        self.framing=False
+        engraver.frameStop(fx,fy,useCenter,centerAxis)
+
+    def burn(self,engraver,mode,useCenter,trf,width,height,power,depth):
+        global args
         if mode=='image':
-            img=STORAGE['textimage'].copy()
-            img=EngraverData._trfImage(img,args)
-            data=EngraverData._imageToData(img)
+            img=STORAGE['image'].copy()
         else:
-            pass
-        BurnThread(engraver,data,useCenter)
-    
+            img=STORAGE['textimage'].copy()
+        args.size=(width,height)
+        args.trf=parseTrf(trf)
+        args.power=power
+        args.depth=depth
+        data=EngraverData._imageToData(img,args)
+        BurnThread(self,engraver,data,useCenter).start()
+        self.engraving=True
+        
     def run(self):
         while not self.doStop:
             msg=self.queue.get()
@@ -805,6 +817,10 @@ class Worker(threading.Thread):
         self.queue.put(obj)
 
 
+    def engravingDone(self):
+        self.engraving=False
+        self.receive({"cmd":"nop"})
+        
 class UrlOpener(threading.Thread):
     def __init__(self,bname,host,port):
         self.port=port
@@ -832,14 +848,16 @@ class UrlOpener(threading.Thread):
         self.browser.open_new_tab('http://%s:%s'%(self.host,self.port))
 
 class BurnThread(threading.Thread):
-    def __init__(self, engraver,data,useCenter): 
+    def __init__(self,worker, engraver,data,useCenter): 
         threading.Thread.__init__(self) 
         self.engraver=engraver
         self.useCenter=useCenter
         self.data=data
+        self.worker=worker
               
     def run(self): 
-        engraver.burn(data,useCenter)
+        engraver.burn(self.data,self.useCenter)
+        worker.engravingDone()
            
     def get_id(self): 
         if hasattr(self, '_thread_id'): 
@@ -853,7 +871,10 @@ class BurnThread(threading.Thread):
         res = ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id,ctypes.py_object(KeyboardInterrupt)) 
         if res > 1: 
             print('Exception raise failure') 
-       
+
+
+Ask=lambda msg: True
+
 parser = argparse.ArgumentParser(description=DESCRIPTION,formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 parser.add_argument('-d', '--device',metavar="device",help='the serial device',default="/dev/ttyUSB0")
@@ -867,7 +888,9 @@ parser.add_argument('-B', '--bind',metavar="bind",help='use the given address to
 parser.add_argument('-P', '--port',metavar="port",help='use the given port',
                     default=8008)
 
-parser.add_argument('-T','--transform',metavar='cw|ccw|turn|tb|lr', help=argparse.SUPPRESS,dest='trf',nargs='+')
+parser.add_argument('-T','--transform', help=argparse.SUPPRESS,dest='trf')
+parser.add_argument('--dry-run',dest='dummy', help=argparse.SUPPRESS)
+parser.add_argument('--invert',dest='invert', help=argparse.SUPPRESS,default=False,action='store_true')
 args = parser.parse_args()
 
 if args.bind not in ['0.0.0.0','127.0.0.1']:

@@ -204,6 +204,10 @@ class EngraverData(Base):
     @staticmethod
     def _imageToData(im,args):
         data=True
+        if args.size and args.size!=im.size:
+            im.thumbnail(args.size)
+            Logger.LOGGER.info("image resized to width:%s height:%s\n",formatUnit(im.width),formatUnit(im.height))
+        Logger.LOGGER.info("preparing image data width:%s height:%s\n",formatUnit(im.width),formatUnit(im.height))
         im=im.convert('1',dither=Image.FLOYDSTEINBERG) # to black and white        
         im=EngraverData._trfImage(im,args)
         if args.dummy:
@@ -282,10 +286,6 @@ class EngraverData(Base):
         im=Image.open(args.image)
         im.load()
         im=EngraverData.preprocessImage(im)
-        if args.size:
-            im.thumbnail(args.size)
-            Logger.LOGGER.info("image resized to width:%s height:%s\n",formatUnit(im.width),formatUnit(im.height))
-        Logger.LOGGER.info("preparing image data width:%s height:%s\n",formatUnit(im.width),formatUnit(im.height))
         return EngraverData._imageToData(im,args)
 
     @staticmethod
@@ -483,10 +483,10 @@ class Engraver(Base):
             engraver.frameStop(fx,fy,useCenter,centerAxis)
     
     def burn(self,data,useCenter):
-        if useCenter:
-            dx,dy=data.size()
-            self.move(-dx//2,-dy//2)
         try:
+            if useCenter:
+                dx,dy=data.size()
+                self.move(-dx//2,-dy//2)
             data.sendData(self)
             msg="\rcompleted!\n"
             self.info("engraving...\n")
@@ -495,9 +495,9 @@ class Engraver(Base):
             while True:
                 try:
                     resp=self.ser.read(4)
-                    self.info("\r%02d%% done",resp[3])
                     if resp==self.COMPLETED:
                         break
+                    self.info("\r%02d%% done",resp[3])
                 except KeyboardInterrupt:
                     self.pause()
                     if Ask("Paused! Do you want to cancel the process?"):

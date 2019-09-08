@@ -6,7 +6,8 @@ export class Status extends Generic{
         public busy=false,
         public fanOn=true,
         public success=true,
-        public working = false,
+        public framing = false,
+        public engraving = false,
         public useCenter=false,
         public centerAxis:string=undefined) {
         super('status');
