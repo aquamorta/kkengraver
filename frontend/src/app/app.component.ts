@@ -114,12 +114,14 @@ export class AppComponent implements OnInit, AfterViewInit {
 
     statusHandler(status: Status) {
         this.locked = false;
-        console.log("status:",status);
         this.status = status;
-        this.disabled = !status.connected;
+        this.disabled = !status.connected || status.engraving || status.framing;
+        console.log("status:", status, this.disabled);
+        
     }
 
     messageHandler(msg: Message) {
+        
         this.log.push(`[${msg.severity}] ${msg.content}`);
         setTimeout( () => this.scrollToBottom(),10);
     }
@@ -223,6 +225,31 @@ export class AppComponent implements OnInit, AfterViewInit {
         } else {
             this.send({'cmd': 'frameStop', 'args': {'fx': this.width, 'fy': this.height, 'useCenter': this.useCenter,'centerAxis':this.xyCenterSaved}});            
         }
+    }
+    
+    startEngrave() {
+        this.fan(true);
+        let cmd={'cmd': 'burn', 'args': {
+            'mode': this.mode, 
+            'useCenter': this.useCenter,
+            'trf': this.transformation(),
+            'width': this.width,
+            'height': this.height,
+            'power': this.power,
+            'depth': this.depth}};
+        console.log(cmd);
+        this.send(cmd); 
+    }
+
+    stopEngrave() {
+        console.log({'cmd': 'burn', 'args': {
+            'mode': this.mode, 
+            'useCenter': this.useCenter,
+            'trf': this.transformation(),
+            'width': this.width,
+            'height': this.height,
+            'power': this.power,
+            'depth': this.depth}});
     }
 
 }

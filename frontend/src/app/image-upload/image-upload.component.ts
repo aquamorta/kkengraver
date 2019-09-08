@@ -10,6 +10,9 @@ export class ImageUploadComponent implements OnInit {
     @Input()
     uploadURL: string;
 
+    @Input()
+    disabled=false;
+
     @Output()
     completed = new EventEmitter<XMLHttpRequest>();
 

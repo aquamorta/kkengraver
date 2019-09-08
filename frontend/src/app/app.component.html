@@ -5,7 +5,7 @@
     </mat-card-header>
     <mat-card-content>
         <button *ngIf="!status.connected"  mat-raised-button class="icon-button" title="Connect to engraver" [disabled]="locked" (click)="connect()"><mat-icon>power</mat-icon></button>
-        <button *ngIf="status.connected" mat-raised-button class="icon-button" [disabled]="locked" title="Disconnect from engraver" (click)="disconnect()"><mat-icon>power</mat-icon><mat-icon class="over">block</mat-icon></button>
+        <button *ngIf="status.connected" mat-raised-button class="icon-button" [disabled]="disabled" title="Disconnect from engraver" (click)="disconnect()"><mat-icon>power</mat-icon><mat-icon class="over">block</mat-icon></button>
 
         <button *ngIf="!status.fanOn"  mat-raised-button class="icon-button" title="Switch fan on" [disabled]="disabled" (click)="fan(true)"><mat-icon>toys</mat-icon></button>
         <button *ngIf="status.fanOn" mat-raised-button class="icon-button" title="Switch fan off" [disabled]="disabled" (click)="fan(false)"><mat-icon>toys</mat-icon><mat-icon class="over">block</mat-icon></button>
@@ -49,7 +49,10 @@
                             <mat-hint align="start">Laser Power  </mat-hint>
                         </mat-form-field>                        
                     </mat-grid-tile>
-                    <mat-grid-tile class="b-top"><button mat-raised-button [disabled]="disabled" class="icon-button" title="Start engraving"><mat-icon>flash_on</mat-icon></button></mat-grid-tile>
+                    <mat-grid-tile class="b-top">
+                        <button *ngIf="!status.engraving" mat-raised-button [disabled]="disabled" class="icon-button" (click)="startEngrave()" title="Start engraving"><mat-icon>flash_on</mat-icon></button>
+                        <button *ngIf="status.engraving" mat-raised-button [disabled]="!status.engraving" class="icon-button" (click)="stopEngrave()" title="Stop engraving"><mat-icon>flash_on</mat-icon><mat-icon class="over">block</mat-icon></button>
+                    </mat-grid-tile>
 
                     <!-- row 3 -->
                     <mat-grid-tile></mat-grid-tile>
@@ -74,38 +77,38 @@
         <mat-card-title>
             <div class="inline spacer">
                 <mat-button-toggle-group [(ngModel)]="useCenter">
-                    <mat-button-toggle class="icon-button" [value]="false" ><mat-icon style="transform: scale(-1,1)">open_in_new</mat-icon></mat-button-toggle>
-                    <mat-button-toggle class="icon-button" [value]="true" ><mat-icon>filter_center_focus</mat-icon></mat-button-toggle>
+                    <mat-button-toggle [disabled]="disabled" class="icon-button" [value]="false" ><mat-icon style="transform: scale(-1,1)">open_in_new</mat-icon></mat-button-toggle>
+                    <mat-button-toggle [disabled]="disabled" class="icon-button" [value]="true" ><mat-icon>filter_center_focus</mat-icon></mat-button-toggle>
                 </mat-button-toggle-group>
             </div>
             <div class="inline">
                 <mat-button-toggle-group [(ngModel)]="mode">
-                    <mat-button-toggle class="icon-button" title="Image" value="image" (change)="imageSelected()"><mat-icon>image</mat-icon></mat-button-toggle>
-                    <mat-button-toggle class="icon-button" title="Text" value="text" (change)="textSelected()"><mat-icon>title</mat-icon></mat-button-toggle>
+                    <mat-button-toggle [disabled]="disabled" class="icon-button" title="Image" value="image" (change)="imageSelected()"><mat-icon>image</mat-icon></mat-button-toggle>
+                    <mat-button-toggle [disabled]="disabled" class="icon-button" title="Text" value="text" (change)="textSelected()"><mat-icon>title</mat-icon></mat-button-toggle>
                 </mat-button-toggle-group>
             </div>
             <div class="spacer"></div>
             <div class="inline spacer">
-                <button mat-raised-button class="icon-button" (click)="rotateClicked(1)"><mat-icon>rotate_left</mat-icon></button>
-                <button mat-raised-button class="icon-button" (click)="rotateClicked(-1)"><mat-icon>rotate_right</mat-icon></button>
+                <button mat-raised-button [disabled]="disabled" class="icon-button" (click)="rotateClicked(1)"><mat-icon>rotate_left</mat-icon></button>
+                <button mat-raised-button [disabled]="disabled" class="icon-button" (click)="rotateClicked(-1)"><mat-icon>rotate_right</mat-icon></button>
             </div>
             <div class="inline spacer">
-                <button mat-raised-button class="icon-button" (click)="mirrorClicked(1)"><mat-icon>swap_vert</mat-icon></button>
-                <button mat-raised-button class="icon-button" (click)="mirrorClicked(2)"><mat-icon>swap_horiz</mat-icon></button>
+                <button mat-raised-button [disabled]="disabled" class="icon-button" (click)="mirrorClicked(1)"><mat-icon>swap_vert</mat-icon></button>
+                <button mat-raised-button [disabled]="disabled" class="icon-button" (click)="mirrorClicked(2)"><mat-icon>swap_horiz</mat-icon></button>
             </div>
             <div class="spacer"></div>
 
             <div  *ngIf="mode=='image'" class="upload inline">
-                <image-upload [uploadURL]="'/image'" (completed)="updateImage()"></image-upload>
+                <image-upload [disabled]="disabled" [uploadURL]="'/image'" (completed)="updateImage()"></image-upload>
             </div>
             <div *ngIf="mode=='text'" class="inline">
                 <mat-form-field class="nopadding" style="width:480px;">
-                    <input matInput [(ngModel)]="text" (ngModelChange)="this.textUpdate.next($event)" />
+                    <input matInput [disabled]="disabled"  [(ngModel)]="text" (ngModelChange)="this.textUpdate.next($event)" />
                            <button mat-button *ngIf="text" matSuffix mat-icon-button aria-label="Clear" (click)="text=''"><mat-icon>close</mat-icon></button>
                 </mat-form-field>
                 <div class="spacer"></div>
                 <mat-form-field class="nopadding" style="width:320px;">
-                    <mat-select [(value)]="selectedFont" (selectionChange)="fontChanged($event)">
+                    <mat-select [disabled]="disabled"  [(value)]="selectedFont" (selectionChange)="fontChanged($event)">
                         <mat-option *ngFor="let f of fonts" [value]="f.file">
                             {{f.name}}
                     </mat-option>
