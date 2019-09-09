@@ -17,6 +17,8 @@ export class AppComponent implements OnInit, AfterViewInit {
     locked: boolean = false;
 
     disabled: boolean = true;
+    
+    totalDisabled: boolean = true;
 
     status: Status = new Status();
 
@@ -115,13 +117,11 @@ export class AppComponent implements OnInit, AfterViewInit {
     statusHandler(status: Status) {
         this.locked = false;
         this.status = status;
-        this.disabled = !status.connected || status.engraving || status.framing;
-        console.log("status:", status, this.disabled);
-        
+        this.disabled = status.engraving || status.framing;        
+        this.totalDisabled = !status.connected || this.disabled;     
     }
 
-    messageHandler(msg: Message) {
-        
+    messageHandler(msg: Message) {        
         this.log.push(`[${msg.severity}] ${msg.content}`);
         setTimeout( () => this.scrollToBottom(),10);
     }
@@ -132,15 +132,12 @@ export class AppComponent implements OnInit, AfterViewInit {
         this.service.send(msg);
     }
 
-
     textSelected() {
         this.updateImage();
-        console.log(`mode:${this.mode}`);
     }
 
     imageSelected() {
         this.updateImage();
-        console.log(`mode:${this.mode}`);
     }
 
     updateImage() {
