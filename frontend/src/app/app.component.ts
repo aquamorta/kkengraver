@@ -223,13 +223,14 @@ export class AppComponent implements OnInit, AfterViewInit {
             this.xyCenterSaved = this.xyCenter[0];
             this.send({'cmd': 'frameStart', 'args': {'fx': this.width, 'fy': this.height, 'useCenter': this.useCenter,'centerAxis':this.xyCenterSaved}});
         } else {
-            this.send({'cmd': 'frameStop', 'args': {'fx': this.width, 'fy': this.height, 'useCenter': this.useCenter,'centerAxis':this.xyCenterSaved}});            
+            this.send({'cmd': 'frameStop', 'args': {'fx': this.width, 'fy': this.height, 'useCenter': this.useCenter,'centerAxis':this.xyCenterSaved}});     
+            this.xyCenterSaved=null;       
         }
     }
     
     startEngrave() {
         this.fan(true);
-        let cmd={'cmd': 'burn', 'args': {
+        let cmd={'cmd': 'engrave', 'args': {
             'mode': this.mode, 
             'useCenter': this.useCenter,
             'trf': this.transformation(),
@@ -237,19 +238,11 @@ export class AppComponent implements OnInit, AfterViewInit {
             'height': this.height,
             'power': this.power,
             'depth': this.depth}};
-        console.log(cmd);
         this.send(cmd); 
     }
 
-    stopEngrave() {
-        console.log({'cmd': 'burn', 'args': {
-            'mode': this.mode, 
-            'useCenter': this.useCenter,
-            'trf': this.transformation(),
-            'width': this.width,
-            'height': this.height,
-            'power': this.power,
-            'depth': this.depth}});
+    stopEngrave() {        
+        this.send({'cmd': 'stopEngraving', 'args': {}});
     }
 
 }

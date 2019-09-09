@@ -32,14 +32,22 @@ if VER[0]<3:
 STDOUT=sys.stdout
 STDERR=sys.stderr
 
-def _StdAsk(question):
-    sys.stdout.write(question)
-    sys.stdout.write(" (Y/n)\n")
-    sys.stdout.flush()
-    return sys.stdin.readline()[0].lower()!='n'
+class UI(object):
+    ASK=None
 
-Ask=_StdAsk
+    @staticmethod
+    def _StdAsk(question):
+        sys.stdout.write(question)
+        sys.stdout.write(" (Y/n)\n")
+        sys.stdout.flush()
+        return sys.stdin.readline()[0].lower()!='n'
 
+    @staticmethod
+    def setAsk(ask):
+        UI.ASK=ask
+
+UI.setAsk(UI._StdAsk)
+    
 class Logger(object):
     LEVELS={"FATAL":-3,"ERROR":-2,"WARN":-1,"INFO":0,"DEBUG":1}
     LOGGER=None
@@ -384,6 +392,9 @@ class Engraver(Base):
             self.fatal("connection failed! Could not detect engraver!")
         
     def send(self,data,exp=Base.ACK):
+        if self.ser.in_waiting>0:
+            stale=self.ser.read(self.ser.in_waiting)
+            self.warn("read stale bytes from device: %s\n",stale)
         self.debug("sending:%s\n",data)
         self.ser.write(bytes(data))
         if exp!=None:
@@ -500,7 +511,8 @@ class Engraver(Base):
                     self.info("\r%02d%% done",resp[3])
                 except KeyboardInterrupt:
                     self.pause()
-                    if Ask("Paused! Do you want to cancel the process?"):
+                    time.sleep(5)
+                    if UI.ASK("Paused! Do you want to cancel the process?"):
                         self.stop()
                         msg="\rcanceled!\n"
                         break
@@ -508,6 +520,8 @@ class Engraver(Base):
             if self.logging("DEBUG"):
                 self.debug("engraving time: %.1f secs\n",time.time()-start)
             self.info(msg)
+        except KeyboardInterrupt:
+            self.stop()
         finally:
             if useCenter:
                 self.move(dx//2,dy//2)
