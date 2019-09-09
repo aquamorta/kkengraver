@@ -39,7 +39,7 @@ from PIL import Image,ImageDraw,ImageFont
 from urllib.parse import parse_qs
 from io import BytesIO
 
-from engraver import Logger,Engraver,EngraverData,DESCRIPTION,unitValue,imageTrf,Ask
+from engraver import Logger,Engraver,EngraverData,DESCRIPTION,unitValue,imageTrf,UI
 
 ##############################################################################
 FONTDIR='fonts'
@@ -659,7 +659,6 @@ class Httpd(HTTPServer):
         self.listeners[fd].DoRead()
 
     def HandleClose(self,fd):
-        print ('close fd %s'%fd)
         client=self.listeners[fd]
         client.DoClose()
         self.Unregister(client)
@@ -733,6 +732,7 @@ class Worker(threading.Thread):
         self.framing=False
         self.centerAxis=None
         self.useCenter=False
+        self.burner=None
         self.queue=queue.Queue(1)
         self.commands={
             'connect':self.connect,
@@ -744,7 +744,8 @@ class Worker(threading.Thread):
             'status':lambda e: None,
             'frameStart':self.frameStart,
             'frameStop':self.frameStop,
-            'burn':self.burn
+            'engrave':self.engrave,
+            'stopEngraving':self.stopEngraving
             }
         threading.Thread.__init__(self)
         self.setDaemon(True)
@@ -779,7 +780,7 @@ class Worker(threading.Thread):
         self.framing=False
         engraver.frameStop(fx,fy,useCenter,centerAxis)
 
-    def burn(self,engraver,mode,useCenter,trf,width,height,power,depth):
+    def engrave(self,engraver,mode,useCenter,trf,width,height,power,depth):
         global args
         if mode=='image':
             img=STORAGE['image'].copy()
@@ -790,13 +791,17 @@ class Worker(threading.Thread):
         args.power=power
         args.depth=depth
         data=EngraverData._imageToData(img,args)
-        BurnThread(self,engraver,data,useCenter).start()
+        self.burner=BurnThread(self,engraver,data,useCenter)
+        self.burner.start()
         self.engraving=True
-        
+
+    def stopEngraving(self,engraver):
+        if self.burner:
+            self.burner.pause()
+            
     def run(self):
         while not self.doStop:
             msg=self.queue.get()
-            print("msg:%s"%msg)
             self.busy=True
             cmd=self.commands.get(msg.get('cmd'))
             if cmd:
@@ -816,9 +821,9 @@ class Worker(threading.Thread):
     def receive(self,obj):
         self.queue.put(obj)
 
-
     def engravingDone(self):
         self.engraving=False
+        self.burner=None
         self.receive({"cmd":"nop"})
         
 class UrlOpener(threading.Thread):
@@ -855,25 +860,18 @@ class BurnThread(threading.Thread):
         self.data=data
         self.worker=worker
               
-    def run(self): 
+    def run(self):
+        self.thread_id=threading.current_thread().ident
         engraver.burn(self.data,self.useCenter)
         worker.engravingDone()
            
-    def get_id(self): 
-        if hasattr(self, '_thread_id'): 
-            return self._thread_id 
-        for id, thread in threading._active.items(): 
-            if thread is self: 
-                return id
-   
     def pause(self): 
-        thread_id = self.get_id() 
-        res = ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id,ctypes.py_object(KeyboardInterrupt)) 
-        if res > 1: 
+        res = ctypes.pythonapi.PyThreadState_SetAsyncExc(ctypes.c_long(self.thread_id),ctypes.py_object(KeyboardInterrupt))
+        if res != 1: 
             print('Exception raise failure') 
 
 
-Ask=lambda msg: True
+UI.setAsk(lambda msg: True)
 
 parser = argparse.ArgumentParser(description=DESCRIPTION,formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
