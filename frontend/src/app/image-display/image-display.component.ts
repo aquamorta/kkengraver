@@ -76,7 +76,7 @@ export class ImageDisplayComponent implements OnInit, AfterViewInit {
             ctx.moveTo(i * pxPerMm + this.margin, s);
             ctx.lineTo(i * pxPerMm + this.margin, this.margin);
             if (i + 1 > widthMm) {
-                ctx.fillText((width / this.pxPerMm).toFixed(1) + " mm", width * scaleDown + this.margin + 2, this.margin / 3.);
+                ctx.fillText((width / this.pxPerMm).toFixed(1) + " mm", width * scaleDown + this.margin + 2, this.margin );
             }
         }
         ctx.stroke();
@@ -125,8 +125,8 @@ export class ImageDisplayComponent implements OnInit, AfterViewInit {
             offX += f * img.width / 2.
             offY += f * img.height / 2.
         }
-        ctx.globalAlpha = 0.66;
-        ctx.strokeStyle = "#00ff00";
+        ctx.globalAlpha = 0.8;
+        ctx.strokeStyle = "#0000ff";
         ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(offX - this.margin / 2, offY);
@@ -136,8 +136,8 @@ export class ImageDisplayComponent implements OnInit, AfterViewInit {
         ctx.stroke();
 
         ctx.font = "12px Helvetica";
-        ctx.fillText(img.height.toFixed(), img.width + this.margin + 8, (img.height + this.margin) / 2. + 8);
-        ctx.fillText(img.width.toFixed(), (img.width + this.margin) / 2, img.height + this.margin + 16);
+        ctx.fillText(img.height.toFixed(), f*img.width + this.margin + 8, f*(img.height + this.margin) / 2. + 8);
+        ctx.fillText(img.width.toFixed(), f*(img.width + this.margin) / 2, f*img.height + this.margin + 16);
 
     }
 
