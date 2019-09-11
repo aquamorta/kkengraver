@@ -103,7 +103,7 @@
             </div>
             <div *ngIf="mode=='text'" class="inline">
                 <mat-form-field class="nopadding" style="width:480px;">
-                    <input matInput [disabled]="disabled"  [(ngModel)]="text" (ngModelChange)="this.textUpdate.next($event)" />
+                    <textarea class="text-input" matInput [disabled]="disabled" [(ngModel)]="text" (ngModelChange)="this.textUpdate.next($event)" ></textarea>
                            <button mat-button *ngIf="text" matSuffix mat-icon-button aria-label="Clear" (click)="text=''"><mat-icon>close</mat-icon></button>
                 </mat-form-field>
                 <div class="spacer"></div>

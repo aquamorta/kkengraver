@@ -17,7 +17,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     locked: boolean = false;
 
     disabled: boolean = true;
-    
+
     totalDisabled: boolean = true;
 
     status: Status = new Status();
@@ -26,19 +26,19 @@ export class AppComponent implements OnInit, AfterViewInit {
 
     moveDistance: number = 1;
 
-    power:number=100;
-    
-    depth:number=10;
-    
+    power: number = 100;
+
+    depth: number = 10;
+
     mode: string = "image";
 
     text: string = "Hello world!";
 
     useCenter: boolean = false;
 
-    xyCenter: string[]=[];
+    xyCenter: string[] = [];
 
-    xyCenterSaved: string=undefined;
+    xyCenterSaved: string = undefined;
 
     widthUpdate = new Subject<string>();
 
@@ -46,17 +46,19 @@ export class AppComponent implements OnInit, AfterViewInit {
 
     textUpdate = new Subject<string>();
 
-    private rotationArray = ["","ccw","turn","cw"];
+    private rotationArray = ["", "ccw", "turn", "cw"];
 
-    private rotation=0;
+    private rotation = 0;
 
-    private mirrorArray = ["","tb","lr","tb lr"];
+    private mirrorArray = ["", "tb", "lr", "tb lr"];
 
-    private mirror=0;
+    private mirror = 0;
 
     private fonts: Font[] = [];
 
     private selectedFont: string = "";
+
+    private progressPat = /^\r(sending:)? *(1?[0-9]?[0-9])% done$/;
 
     pxPerMm: number = 500. / 25.4;
 
@@ -83,6 +85,7 @@ export class AppComponent implements OnInit, AfterViewInit {
         this.textUpdate.pipe(debounceTime(this.debounceTime), distinctUntilChanged()).subscribe(e => this.updateImage());
         this.scrollContainer = <HTMLDivElement> this.scrollFrame.nativeElement;
         this.updateImage();
+        this.connect();
     }
 
     private scrollToBottom(): void {
@@ -117,13 +120,27 @@ export class AppComponent implements OnInit, AfterViewInit {
     statusHandler(status: Status) {
         this.locked = false;
         this.status = status;
-        this.disabled = status.engraving || status.framing;        
-        this.totalDisabled = !status.connected || this.disabled;     
+        this.disabled = status.engraving || status.framing;
+        this.totalDisabled = !status.connected || this.disabled;
+        if (!this.disabled) {
+            this.imageDisplay.displayProgress(null, null);
+        }
     }
 
-    messageHandler(msg: Message) {        
-        this.log.push(`[${msg.severity}] ${msg.content}`);
-        setTimeout( () => this.scrollToBottom(),10);
+    messageHandler(msg: Message) {
+        let match = this.progressPat.exec(msg.content);
+        if (match) {
+            var mode;
+            if (match[1]) {
+                mode = 'transfer';
+            } else {
+                mode = 'engrave';
+            }
+            this.imageDisplay.displayProgress((+match[2]) / 100., mode);
+        } else {
+            this.log.push(`[${msg.severity}] ${msg.content}`);
+            setTimeout(() => this.scrollToBottom(), 10);
+        }
     }
 
     send(msg: Command) {
@@ -145,10 +162,10 @@ export class AppComponent implements OnInit, AfterViewInit {
         if (this.mode == 'image') {
             src = `/image?width=${this.width}&height=${this.height}&trf=${this.transformation()}`;
         } else {
-            let txt=encodeURIComponent(this.text); 
+            let txt = encodeURIComponent(this.text);
             src = `/textimage?text=${txt}&width=${this.width}&height=${this.height}&font=${this.selectedFont}&trf=${this.transformation()}`;
         }
-        console.log("src="+src)
+        console.log("src=" + src)
         this.imageDisplay.loadImage(src);
     }
 
@@ -159,24 +176,24 @@ export class AppComponent implements OnInit, AfterViewInit {
     transformation() {
         return `${this.rotationArray[this.rotation]} ${this.mirrorArray[this.mirror]}`.trim();
     }
-    
+
     rotateClicked(dir: number) {
-        this.rotation = (this.rotation+dir+4)%4;
+        this.rotation = (this.rotation + dir + 4) % 4;
         this.updateImage();
     }
 
-    mirrorClicked(v:number) {
-        this.mirror^=v;
-        this.updateImage();        
+    mirrorClicked(v: number) {
+        this.mirror ^= v;
+        this.updateImage();
     }
-    
-    click(ev:Event) {
+
+    click(ev: Event) {
         console.log(ev);
     }
 
 
     /********************** engraver commands ********************************/
-    
+
     retrieveStatus() {
         this.send({'cmd': 'status'})
     }
@@ -197,48 +214,51 @@ export class AppComponent implements OnInit, AfterViewInit {
         this.send({'cmd': 'disconnect'});
     }
 
-       
+
     moveRight() {
-        this.send({'cmd': 'move', 'args': {'dx': Math.round(this.moveDistance * this.pxPerMm),'dy':0}});        
-    }
-    
-    moveLeft() {
-        this.send({'cmd': 'move', 'args': {'dx': Math.round(-this.moveDistance * this.pxPerMm),'dy':0}});        
-        
-    }
-    
-    moveDown() {
-        this.send({'cmd': 'move', 'args': {'dx': 0,'dy':Math.round(this.moveDistance * this.pxPerMm)}});                
-    }
-    
-    moveUp() {
-        this.send({'cmd': 'move', 'args': {'dx': 0,'dy':Math.round(-this.moveDistance * this.pxPerMm)}});                        
-    }
-    
-    frame() {
-        if (this.xyCenter[0]!=undefined) {
-            this.xyCenterSaved = this.xyCenter[0];
-            this.send({'cmd': 'frameStart', 'args': {'fx': this.width, 'fy': this.height, 'useCenter': this.useCenter,'centerAxis':this.xyCenterSaved}});
-        } else {
-            this.send({'cmd': 'frameStop', 'args': {'fx': this.width, 'fy': this.height, 'useCenter': this.useCenter,'centerAxis':this.xyCenterSaved}});     
-            this.xyCenterSaved=null;       
-        }
-    }
-    
-    startEngrave() {
-        this.fan(true);
-        let cmd={'cmd': 'engrave', 'args': {
-            'mode': this.mode, 
-            'useCenter': this.useCenter,
-            'trf': this.transformation(),
-            'width': this.width,
-            'height': this.height,
-            'power': this.power,
-            'depth': this.depth}};
-        this.send(cmd); 
+        this.send({'cmd': 'move', 'args': {'dx': Math.round(this.moveDistance * this.pxPerMm), 'dy': 0}});
     }
 
-    stopEngrave() {        
+    moveLeft() {
+        this.send({'cmd': 'move', 'args': {'dx': Math.round(-this.moveDistance * this.pxPerMm), 'dy': 0}});
+
+    }
+
+    moveDown() {
+        this.send({'cmd': 'move', 'args': {'dx': 0, 'dy': Math.round(this.moveDistance * this.pxPerMm)}});
+    }
+
+    moveUp() {
+        this.send({'cmd': 'move', 'args': {'dx': 0, 'dy': Math.round(-this.moveDistance * this.pxPerMm)}});
+    }
+
+    frame() {
+        if (this.xyCenter[0] != undefined) {
+            this.xyCenterSaved = this.xyCenter[0];
+            this.send({'cmd': 'frameStart', 'args': {'fx': this.width, 'fy': this.height, 'useCenter': this.useCenter, 'centerAxis': this.xyCenterSaved}});
+        } else {
+            this.send({'cmd': 'frameStop', 'args': {'fx': this.width, 'fy': this.height, 'useCenter': this.useCenter, 'centerAxis': this.xyCenterSaved}});
+            this.xyCenterSaved = null;
+        }
+    }
+
+    startEngrave() {
+        this.fan(true);
+        let cmd = {
+            'cmd': 'engrave', 'args': {
+                'mode': this.mode,
+                'useCenter': this.useCenter,
+                'trf': this.transformation(),
+                'width': this.width,
+                'height': this.height,
+                'power': this.power,
+                'depth': this.depth
+            }
+        };
+        this.send(cmd);
+    }
+
+    stopEngrave() {
         this.send({'cmd': 'stopEngraving', 'args': {}});
     }
 

@@ -181,7 +181,7 @@ class EngraverData(Base):
             cper=ri//total
             if per!=cper:
                 per=cper
-                self.info("\r%02d%% done",per)
+                self.info("\rsending: % 2d%% done",per)
         self.info("\n")
                 
         engraver.send(self.EPILOG1)
@@ -297,22 +297,31 @@ class EngraverData(Base):
         return EngraverData._imageToData(im,args)
 
     @staticmethod
+    def _textSize(font,text):
+        w,h=(0,0)
+        for l in text.split('\n'):
+            sz=font.getsize(l)
+            h+=sz[1]*1.2
+            w=max(w,sz[0])
+        return (w,h)
+
+    @staticmethod
     def imageFromText(args):
         size=tuple(max(s,args.lim) if s==0 else s for s in args.size or (args.lim,args.lim))
         mside=max(size)
         maxw=min(mside*2,3072)
-        maxh=min(mside*2,2048)
+        maxh=min(mside*2,3072)
         im=Image.new("RGB",(maxw,maxh),(255,255,255))
         fsz=12
-        text="  %s  "%args.text
+        text=" %s "%args.text
         while True:
             nfsz=(fsz*12)//10
             font=ImageFont.truetype(args.font,nfsz)
-            sz=font.getsize(text)
-            if sz[0]>maxw or sz[1]>(maxh//2):
+            sz=EngraverData._textSize(font,text)
+            if sz[0]>maxw or sz[1]>maxh:
                 font=ImageFont.truetype(args.font,fsz)
                 Logger.LOGGER.info("using font:%s\n",font.getname())
-                sz=font.getsize(text)
+                sz=EngraverData._textSize(font,text)
                 pos=((maxw-sz[0])//2,(maxh-sz[1])//2)
                 break
             fsz=nfsz
@@ -361,6 +370,7 @@ class Engraver(Base):
         self.ser=None
         self.opened=False
         self.connected=False
+        self.firmware="unknown"
         self.fanOn=True
         
     def open(self):
@@ -425,9 +435,12 @@ class Engraver(Base):
         self.debug("connecting...\n")
         self.send(self.CONNECT)
         resp=self.ser.read(3)
-        self.connected=(resp==self.CONNECTED)
+        self.debug("response read:%s",resp)
+        self.firmware="%s.%s.%s"%(resp[0],resp[1],resp[2])
+        self.connected=True
         self._check()
-        self.debug("...connected\n")
+        self.debug("...connected!")
+        self.info("Firmware version:%s\n",self.firmware)
 
     def home(self):
         self.send(self.HOME)
@@ -503,12 +516,16 @@ class Engraver(Base):
             self.info("engraving...\n")
             if self.logging("DEBUG"):
                 start=time.time()
+            perc=None
             while True:
                 try:
                     resp=self.ser.read(4)
                     if resp==self.COMPLETED:
+                        self.info("\r100%% done")
                         break
-                    self.info("\r%02d%% done",resp[3])
+                    if perc!=resp[3]:
+                        perc=resp[3]
+                        self.info("\r% 2d%% done",perc)
                 except KeyboardInterrupt:
                     self.pause()
                     time.sleep(5)

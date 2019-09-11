@@ -343,6 +343,13 @@ Here you can see the screen opened with the chromium browser.
 
 ![screenshot with chromium browser](images/screen.png "Main Screen")
 
+In the top section you can see many buttons to control the engraver:
+
+![screenshot with chromium browser](images/image1.png "Connect")
+
+
+
+
 
 
     

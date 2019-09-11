@@ -1,4 +1,5 @@
-<div class="spacing">
-    <canvas #canvas width="800px" height="800px"></canvas>
+<div [style.height.px]="outerHeight" class="image-display spacing">
+    <canvas class="overlay" #canvas width="800px" height="800px"></canvas>
+    <canvas class="overlay" #overlay width="800px" height="800px"></canvas>
 </div>
 <img hidden #image [src]="'logo.png'" (load)="displayImage()"/>

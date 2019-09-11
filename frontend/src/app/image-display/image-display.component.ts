@@ -9,6 +9,8 @@ export class ImageDisplayComponent implements OnInit, AfterViewInit {
 
     @ViewChild('canvas', {static: false}) canvas: ElementRef;
 
+    @ViewChild('overlay', {static: false}) overlay: ElementRef;
+
     @ViewChild('image', {static: false}) image: ElementRef;
 
     @Input()
@@ -27,6 +29,8 @@ export class ImageDisplayComponent implements OnInit, AfterViewInit {
     pxPerMm = 500. / 25.4
 
     private _center = false;
+
+    outerHeight = 500;
 
     constructor() {}
 
@@ -76,7 +80,7 @@ export class ImageDisplayComponent implements OnInit, AfterViewInit {
             ctx.moveTo(i * pxPerMm + this.margin, s);
             ctx.lineTo(i * pxPerMm + this.margin, this.margin);
             if (i + 1 > widthMm) {
-                ctx.fillText((width / this.pxPerMm).toFixed(1) + " mm", width * scaleDown + this.margin + 2, this.margin );
+                ctx.fillText((width / this.pxPerMm).toFixed(1) + " mm", width * scaleDown + this.margin + 2, this.margin);
             }
         }
         ctx.stroke();
@@ -104,14 +108,47 @@ export class ImageDisplayComponent implements OnInit, AfterViewInit {
 
     }
 
+    displayProgress(progress: number, mode: string) {
+        let overlay = <HTMLCanvasElement> this.overlay.nativeElement;
+        var ctx = overlay.getContext('2d');
+        if (mode == 'engrave') {
+            ctx.strokeStyle = "#0000ff";
+        } else {
+            ctx.strokeStyle = "#00ff00";
+        }
+        ctx.fillStyle = "#ffffff";
+        ctx.lineWidth = 3;
+
+        let img = <HTMLImageElement> this.image.nativeElement;
+        ctx.clearRect(0, 0, overlay.width + this.margin, overlay.height + this.margin);
+        if (progress != null) {
+            let start = img.height * progress + this.margin;
+            if (mode == 'engrave') {
+                ctx.globalAlpha = 0.9;
+                ctx.fillRect(this.margin, start, img.width, img.height * (1. - progress));
+            }
+            ctx.globalAlpha = 0.5;
+            ctx.beginPath();
+            ctx.moveTo(this.margin, start);
+            ctx.lineTo(img.width + this.margin, start);
+            ctx.stroke();
+        }
+
+    }
+
     displayImage() {
         let img = <HTMLImageElement> this.image.nativeElement;
         let canvas = <HTMLCanvasElement> this.canvas.nativeElement;
+        let overlay = <HTMLCanvasElement> this.overlay.nativeElement;
         canvas.width = window.innerWidth * this.widthFactor;
         canvas.height = window.innerHeight - this.reserved;
+        overlay.width = canvas.width;
+        overlay.height = canvas.height;
+        this.outerHeight = overlay.height;
+
         var ctx = canvas.getContext('2d');
         var f = 1;
-        while (img.width / f > canvas.width || img.height / f > canvas.height) {
+        while ((img.width / f + this.margin) > canvas.width || (img.height / f + this.margin) > canvas.height) {
             f += 1;
         }
         f = 1. / f
@@ -136,8 +173,8 @@ export class ImageDisplayComponent implements OnInit, AfterViewInit {
         ctx.stroke();
 
         ctx.font = "12px Helvetica";
-        ctx.fillText(img.height.toFixed(), f*img.width + this.margin + 8, f*(img.height + this.margin) / 2. + 8);
-        ctx.fillText(img.width.toFixed(), f*(img.width + this.margin) / 2, f*img.height + this.margin + 16);
+        ctx.fillText(img.height.toFixed(), f * img.width + this.margin + 8, f * (img.height + this.margin) / 2. + 8);
+        ctx.fillText(img.width.toFixed(), f * (img.width + this.margin) / 2, f * img.height + this.margin + 16);
 
     }
 

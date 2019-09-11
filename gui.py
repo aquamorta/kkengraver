@@ -705,7 +705,7 @@ class ExternalLogger(Logger):
         Logger.__init__(self,verbosity)
         self.success=True
         self.channel=channel
-        
+
     def fatal(self,fmt,*args):
         self.log("FATAL",fmt,*args)
 
@@ -891,12 +891,12 @@ parser.add_argument('--dry-run',dest='dummy', help=argparse.SUPPRESS)
 parser.add_argument('--invert',dest='invert', help=argparse.SUPPRESS,default=False,action='store_true')
 args = parser.parse_args()
 
-if args.bind not in ['0.0.0.0','127.0.0.1']:
-    host=args.bind
-else:
-    host='localhost'
 
 if args.browser!='-':
+    if args.bind not in ['0.0.0.0','127.0.0.1']:
+        host=args.bind
+    else:
+        host='localhost'
     UrlOpener(args.browser,host,args.port).start()
 
 StoreImage('web/logo.png')
