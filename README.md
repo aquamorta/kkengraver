@@ -328,6 +328,7 @@ The graphical user interface can startet by entering `./gui.py`. You can get a h
                             interfaces (default: 127.0.0.1)
       -P port, --port port  use the given port (default: 8008)
 
+The GUI has fewer options. You can specify most parameters in the GUI itself.
 The first options are identical to the corresponding ones of `engraver.py`. The last three
 are for specifying the browser, the address and the port for the web server.
 If the `-b` option is ommited the gui is opened in the users default browser.
@@ -337,6 +338,10 @@ By default the web server for the gui is only bound to `127.0.0.1` (localhost) s
 used from the same computer. If you bind it to `0.0.0.0` any computer in the same network can
 control the gui of the engraver. The default port is `8008`. You can change it with the `-P` option.
 
+After starting `gui.py` your default browser should show a new window/tab with the GUI.
+Here you can see the screen opened with the chromium browser.
+
+![screenshot with chromium browser](images/screen.png "Main Screen")
 
 
 
