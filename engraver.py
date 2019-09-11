@@ -564,7 +564,7 @@ def imageTrf(para):
 
 DESCRIPTION="""
 Engraver program for using a KKMoon laser engraver
-V0.9.1 (c) 2019 by Bernd Breitenbach
+V0.9.5 (c) 2019 by Bernd Breitenbach
 This program comes with ABSOLUTELY NO WARRANTY.
 This is free software, and you are welcome to redistribute it
 under certain conditions; See COPYING for details.
