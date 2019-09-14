@@ -21,7 +21,7 @@ import sys
 import time
 import re
 import os
-from PIL import Image,ImageDraw,ImageFont
+from PIL import Image,ImageDraw,ImageFont,ImageEnhance
 
 VER = sys.version_info
 if VER[0]<3:
@@ -272,9 +272,23 @@ class EngraverData(Base):
             data.addRow(row)
         return data
 
+    @staticmethod
+    def _enhanceImage(im,args):
+        if args.contrast!=None or args.brightness!=None:
+            im=im.convert('L')
+        if args.contrast!=None:
+            Logger.LOGGER.info("applying contrast value:%f\n",args.contrast)
+            enhancer=ImageEnhance.Contrast(im)
+            im=enhancer.enhance(args.contrast)
+        if args.brightness!=None:
+            Logger.LOGGER.info("applying brightness value:%f\n",args.brightness)
+            enhancer=ImageEnhance.Brightness(im)
+            im=enhancer.enhance(args.brightness)
+        return im
     
     @staticmethod
     def processImage(im,args):
+        im=EngraverData._enhanceImage(im,args)
         if args.size:
             im.thumbnail(args.size)
         im=im.convert('1',dither=Image.FLOYDSTEINBERG) # to black and white        
@@ -287,6 +301,7 @@ class EngraverData(Base):
             im=im.convert('RGBA')
         if im.mode=='RGBA': # replace transparent pixels with white
             EngraverData._removeAlpha(im)
+        im=EngraverData._enhanceImage(im,args)
         return im
 
     @staticmethod
@@ -573,6 +588,14 @@ def imageTrf(para):
         raise ValueError
     return (para,trf)
 
+def contrastBrightnessValue(para):
+    para=max(-10.,min(10.,float(para)))
+    if para<0.:
+        para=(10.+para)/10.
+    else:
+        para+=1.
+    return para
+
 ########################################################################
 
     
@@ -581,7 +604,7 @@ def imageTrf(para):
 
 DESCRIPTION="""
 Engraver program for using a KKMoon laser engraver
-V0.9.5 (c) 2019 by Bernd Breitenbach
+V0.9.6 (c) 2019 by Bernd Breitenbach
 This program comes with ABSOLUTELY NO WARRANTY.
 This is free software, and you are welcome to redistribute it
 under certain conditions; See COPYING for details.
@@ -611,6 +634,10 @@ if __name__ == '__main__':
     parser.add_argument('--checkerboard',help='engrave a quadratic checkerboard pattern of given tile size and number',
                         metavar=('tile_size','number'),type=unitValue,dest='checker',nargs=2,default=None)
     parser.add_argument('-i','--image',metavar='imagefile', help='the image file to engrave')
+    parser.add_argument('--contrast',metavar='number', help='adjust the contrast of the image [-10,10]',
+                        type=contrastBrightnessValue,default=None)
+    parser.add_argument('--brightness',metavar='number', help='adjust the brightness of the image [-10,10]',
+                        type=contrastBrightnessValue,default=None)
     parser.add_argument('-t','--text',metavar='text', help='the text to engrave; you also have to specify a font with the --font option')
     parser.add_argument('--font',metavar='font', help='the truetype/opentype font used to engrave text')
     parser.add_argument('-T','--transform',metavar='cw|ccw|turn|tb|lr', help='''transform the image after any other operation just before engraving.
@@ -623,8 +650,6 @@ if __name__ == '__main__':
     parser.add_argument('--limit', help='set maximum no. of steps in x/y direction',metavar=('steps'),dest='lim',type=int,default=1575)
     parser.add_argument('--dry-run', help='do not engrave anything; you can specify an optional file for saving engraving data'
                         ,metavar=('imagefile'),dest='dummy',const=".",default=None,nargs='?')
-    
-    #parser.add_argument('-X', help='extended parameter',dest='ext',type=int,default=0) 
     
     args = parser.parse_args()
     Logger.set(Logger(args.verbosity))
