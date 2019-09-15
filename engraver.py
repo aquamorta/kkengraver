@@ -301,7 +301,6 @@ class EngraverData(Base):
             im=im.convert('RGBA')
         if im.mode=='RGBA': # replace transparent pixels with white
             EngraverData._removeAlpha(im)
-        im=EngraverData._enhanceImage(im,args)
         return im
 
     @staticmethod

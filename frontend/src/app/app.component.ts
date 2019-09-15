@@ -170,7 +170,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     updateImage() {
         var src;
         if (this.mode == 'image') {
-            src = `/image?width=${this.width}&height=${this.height}&trf=${this.transformation()}`;
+            src = `/image?width=${this.width}&height=${this.height}&trf=${this.transformation()}&contrast=${this.contrast}&brightness=${this.brightness}`;
         } else {
             let txt = encodeURIComponent(this.text);
             src = `/textimage?text=${txt}&width=${this.width}&height=${this.height}&font=${this.selectedFont}&trf=${this.transformation()}`;

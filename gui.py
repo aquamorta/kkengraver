@@ -39,7 +39,7 @@ from PIL import Image,ImageDraw,ImageFont
 from urllib.parse import parse_qs
 from io import BytesIO
 
-from engraver import Logger,Engraver,EngraverData,DESCRIPTION,unitValue,imageTrf,UI
+from engraver import Logger,Engraver,EngraverData,DESCRIPTION,unitValue,imageTrf,UI,contrastBrightnessValue
 
 ##############################################################################
 FONTDIR='fonts'
@@ -529,13 +529,14 @@ class GUIHandler(SimpleHTTPRequestHandler):
             img=EngraverData.imageFromText(args)
             STORAGE['textimage']=img
         args.trf=parseTrf(dict.get('trf',[None])[0])
-        args.contrast=dict.get('contrast')
-        if args.contrast:
-            args.contrast=float(args.contrast)
-        args.brightness=dict.get('brightness')
-        if args.brightness:
-            args.brightness=float(args.brightness)
         self.SendImage(EngraverData._trfImage(img.copy(),args))
+
+    def _getEnhanceValue(self,dict,key):
+        res=None
+        val=dict.get(key)
+        if val and abs(float(val[0]))>0.001:
+            res=contrastBrightnessValue(val[0])
+        return res
         
     def RenderImage(self,dict):
         for p in ['width','height']:
@@ -545,6 +546,8 @@ class GUIHandler(SimpleHTTPRequestHandler):
         global args 
         args.size=(unitValue(dict['width'][0]),unitValue(dict['height'][0]))
         args.trf=parseTrf(dict.get('trf',[None])[0])
+        args.contrast=self._getEnhanceValue(dict,'contrast')
+        args.brightness=self._getEnhanceValue(dict,'brightness')
         img=EngraverData.processImage(STORAGE['image'].copy(),args)
         self.SendImage(img)
         
@@ -593,7 +596,6 @@ class GUIHandler(SimpleHTTPRequestHandler):
             except:
                 image=None
             if image!=None:
-                stem,ext=os.path.splitext(image.filename)
                 fd=BytesIO(data)
                 StoreImage(fd)
                 self.send_response(200)
