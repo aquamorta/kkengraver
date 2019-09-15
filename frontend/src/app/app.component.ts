@@ -30,6 +30,10 @@ export class AppComponent implements OnInit, AfterViewInit {
 
     depth: number = 10;
 
+    contrast: number=0;
+    
+    brightness: number=0;
+    
     mode: string = "image";
 
     text: string = "Hello world!";
@@ -45,6 +49,10 @@ export class AppComponent implements OnInit, AfterViewInit {
     heightUpdate = new Subject<string>();
 
     textUpdate = new Subject<string>();
+
+    contrastUpdate = new Subject<string>();
+
+    brightnessUpdate = new Subject<string>();
 
     private rotationArray = ["", "ccw", "turn", "cw"];
 
@@ -83,6 +91,8 @@ export class AppComponent implements OnInit, AfterViewInit {
         this.widthUpdate.pipe(debounceTime(this.debounceTime), distinctUntilChanged()).subscribe(e => this.updateImage());
         this.heightUpdate.pipe(debounceTime(this.debounceTime), distinctUntilChanged()).subscribe(e => this.updateImage());
         this.textUpdate.pipe(debounceTime(this.debounceTime), distinctUntilChanged()).subscribe(e => this.updateImage());
+        this.contrastUpdate.pipe(debounceTime(this.debounceTime), distinctUntilChanged()).subscribe(e => this.updateImage());
+        this.brightnessUpdate.pipe(debounceTime(this.debounceTime), distinctUntilChanged()).subscribe(e => this.updateImage());
         this.scrollContainer = <HTMLDivElement> this.scrollFrame.nativeElement;
         this.updateImage();
         this.connect();

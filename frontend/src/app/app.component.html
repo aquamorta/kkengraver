@@ -4,134 +4,160 @@
         <mat-card-title>KKEngraver</mat-card-title>
     </mat-card-header>
     <mat-card-content>
-        <button *ngIf="!status.connected"  mat-raised-button class="icon-button" title="Connect to engraver" [disabled]="locked" (click)="connect()"><mat-icon>power</mat-icon></button>
-        <button *ngIf="status.connected" mat-raised-button class="icon-button" [disabled]="disabled" title="Disconnect from engraver" (click)="disconnect()"><mat-icon>power</mat-icon><mat-icon class="over">block</mat-icon></button>
 
-        <button *ngIf="!status.fanOn"  mat-raised-button class="icon-button" title="Switch fan on" [disabled]="totalDisabled" (click)="fan(true)"><mat-icon>toys</mat-icon></button>
-        <button *ngIf="status.fanOn" mat-raised-button class="icon-button" title="Switch fan off" [disabled]="totalDisabled" (click)="fan(false)"><mat-icon>toys</mat-icon><mat-icon class="over">block</mat-icon></button>
+        <div class="flow ">
 
+            <div class="block padded">
+                <div style="padding: 8px;">
+                    <button *ngIf="!status.connected"  mat-raised-button class="icon-button" title="Connect to engraver" [disabled]="locked" (click)="connect()"><mat-icon>power</mat-icon></button>
+                    <button *ngIf="status.connected" mat-raised-button class="icon-button" [disabled]="disabled" title="Disconnect from engraver" (click)="disconnect()"><mat-icon>power</mat-icon><mat-icon class="over">block</mat-icon></button>
 
-        <div style="width:360px;height:180px;padding: 8px;">
-            <div>
-                <mat-grid-list cols="6" rows="3" [gutterSize]="0" >
-                    <!-- row 1 -->
-                    <mat-grid-tile><button mat-raised-button class="icon-button" title="Move to origin" [disabled]="totalDisabled" (click)="home()"><mat-icon>home</mat-icon></button></mat-grid-tile>
-                    <mat-grid-tile><button mat-raised-button class="icon-button" [disabled]="totalDisabled" title="Move y-axis -{{moveDistance}} mm" (click)="moveUp()"><mat-icon>expand_less</mat-icon></button></mat-grid-tile>
-                    <mat-grid-tile></mat-grid-tile>
-                    <mat-grid-tile class="b-left">
-                        <mat-button-toggle-group multiple [(ngModel)]="xyCenter" (change)="frame()">
-                            <mat-button-toggle [disabled]="totalDisabled && xyCenterSaved!='y'" title="Preview y-axis" class="icon-button" [value]="'y'" ><mat-icon>settings_ethernet</mat-icon></mat-button-toggle>
-                        </mat-button-toggle-group>
-                    </mat-grid-tile>
-                    <mat-grid-tile> 
-                        <mat-button-toggle-group multiple [(ngModel)]="xyCenter" (change)="frame()">
-                            <mat-button-toggle [disabled]="totalDisabled  && xyCenterSaved!='x'" title="Preview x-axis" class="icon-button" [value]="'x'" ><mat-icon style="transform:rotate(90deg)">settings_ethernet</mat-icon></mat-button-toggle>
-                        </mat-button-toggle-group>
-                    </mat-grid-tile>
-                    <mat-grid-tile>
-                        <mat-button-toggle-group multiple [(ngModel)]="xyCenter" (change)="frame()">
-                            <mat-button-toggle [disabled]="totalDisabled  && xyCenterSaved!=''" title="Preview frame" class="icon-button" [value]="''" ><mat-icon>crop_din</mat-icon></mat-button-toggle>
-                        </mat-button-toggle-group>
-                    </mat-grid-tile>
-                        
-                    <!-- row 2 -->
-                    <mat-grid-tile><button mat-raised-button [disabled]="totalDisabled" title="Move x-axis -{{moveDistance}} mm" class="icon-button" (click)="moveLeft()"><mat-icon>chevron_left</mat-icon></button></mat-grid-tile>
-                    <mat-grid-tile>
-                        <mat-form-field class="size-sm">
-                            <input matInput  class="distance" type="number" min="0.1" max="10" step="0.1" title="Distance to move on click" [(ngModel)]="moveDistance" />                             
-                            <mat-hint align="end">mm  </mat-hint>
+                    <button *ngIf="!status.fanOn"  mat-raised-button class="icon-button" title="Switch fan on" [disabled]="totalDisabled" (click)="fan(true)"><mat-icon>toys</mat-icon></button>
+                    <button *ngIf="status.fanOn" mat-raised-button class="icon-button" title="Switch fan off" [disabled]="totalDisabled" (click)="fan(false)"><mat-icon>toys</mat-icon><mat-icon class="over">block</mat-icon></button>
+                </div>
+
+                <div style="width:360px;height:170px;">
+                    <div>
+                        <mat-grid-list cols="6" rows="3" [gutterSize]="0" >
+                            <!-- row 1 -->
+                            <mat-grid-tile><button mat-raised-button class="icon-button" title="Move to origin" [disabled]="totalDisabled" (click)="home()"><mat-icon>home</mat-icon></button></mat-grid-tile>
+                            <mat-grid-tile><button mat-raised-button class="icon-button" [disabled]="totalDisabled" title="Move y-axis -{{moveDistance}} mm" (click)="moveUp()"><mat-icon>expand_less</mat-icon></button></mat-grid-tile>
+                            <mat-grid-tile></mat-grid-tile>
+                            <mat-grid-tile class="b-left">
+                                <mat-button-toggle-group multiple [(ngModel)]="xyCenter" (change)="frame()">
+                                                         <mat-button-toggle [disabled]="totalDisabled && xyCenterSaved!='y'" title="Preview y-axis" class="icon-button" [value]="'y'" ><mat-icon>settings_ethernet</mat-icon></mat-button-toggle>
+                                </mat-button-toggle-group>
+                            </mat-grid-tile>
+                            <mat-grid-tile> 
+                                <mat-button-toggle-group multiple [(ngModel)]="xyCenter" (change)="frame()">
+                                                         <mat-button-toggle [disabled]="totalDisabled  && xyCenterSaved!='x'" title="Preview x-axis" class="icon-button" [value]="'x'" ><mat-icon style="transform:rotate(90deg)">settings_ethernet</mat-icon></mat-button-toggle>
+                                </mat-button-toggle-group>
+                            </mat-grid-tile>
+                            <mat-grid-tile>
+                                <mat-button-toggle-group multiple [(ngModel)]="xyCenter" (change)="frame()">
+                                                         <mat-button-toggle [disabled]="totalDisabled  && xyCenterSaved!=''" title="Preview frame" class="icon-button" [value]="''" ><mat-icon>crop_din</mat-icon></mat-button-toggle>
+                                </mat-button-toggle-group>
+                            </mat-grid-tile>
+
+                            <!-- row 2 -->
+                            <mat-grid-tile><button mat-raised-button [disabled]="totalDisabled" title="Move x-axis -{{moveDistance}} mm" class="icon-button" (click)="moveLeft()"><mat-icon>chevron_left</mat-icon></button></mat-grid-tile>
+                            <mat-grid-tile>
+                                <mat-form-field class="size-sm">
+                                    <input matInput  class="distance" type="number" min="0.1" max="10" step="0.1" title="Distance to move on click" [(ngModel)]="moveDistance" />                             
+                                    <mat-hint align="end">mm  </mat-hint>
+                                </mat-form-field>
+                            </mat-grid-tile>
+                            <mat-grid-tile><button mat-raised-button [disabled]="totalDisabled" title="Move x-axis {{moveDistance}} mm" class="icon-button" (click)="moveRight()"><mat-icon>chevron_right</mat-icon></button></mat-grid-tile>
+                            <mat-grid-tile colspan="2" class="b-left b-top">
+                                <mat-form-field class="size-m">
+                                    <input matInput  class="distance" type="number" min="1" max="100" step="1" title="Laser power (1-100)" [(ngModel)]="power" />                             
+                                    <mat-hint align="start">Laser Power  </mat-hint>
+                                </mat-form-field>                        
+                            </mat-grid-tile>
+                            <mat-grid-tile class="b-top">
+                                <button *ngIf="!status.engraving" mat-raised-button [disabled]="totalDisabled" class="icon-button" (click)="startEngrave()" title="Start engraving"><mat-icon>flash_on</mat-icon></button>
+                                <button *ngIf="status.engraving" mat-raised-button [disabled]="!status.engraving" class="icon-button" (click)="stopEngrave()" title="Stop engraving"><mat-icon>flash_on</mat-icon><mat-icon class="over">block</mat-icon></button>
+                            </mat-grid-tile>
+
+                            <!-- row 3 -->
+                            <mat-grid-tile></mat-grid-tile>
+                            <mat-grid-tile><button mat-raised-button [disabled]="totalDisabled"  title="y-axis {{moveDistance}} mm" class="icon-button" (click)="moveDown()"><mat-icon>expand_more</mat-icon></button></mat-grid-tile>
+                            <mat-grid-tile></mat-grid-tile>
+                            <mat-grid-tile class="b-left" colspan="2">
+                                <mat-form-field class="size-m">
+                                    <input matInput  class="distance" type="number" min="1" max="100" step="1" title="Engraving Depth (1-100)" [(ngModel)]="depth" />                             
+                                    <mat-hint align="start">Depth</mat-hint>
+                                </mat-form-field>                        
+                            </mat-grid-tile>
+                            <mat-grid-tile></mat-grid-tile>
+                        </mat-grid-list>
+                    </div>
+                </div>
+
+            </div>
+            <div class="separator padded">
+                <div style="display:flex">
+                    <div style="width:92px;height:186px">
+                        <mat-grid-list cols="1" rows="4" rowHeight="2:1" [gutterSize]="0" >
+                            <mat-grid-tile>
+                                <mat-button-toggle-group [(ngModel)]="useCenter">
+                                    <mat-button-toggle [disabled]="disabled" class="icon-button" title="Use top-left as reference" [value]="false" ><mat-icon style="transform: scale(-1,1)">open_in_new</mat-icon></mat-button-toggle>
+                                    <mat-button-toggle [disabled]="disabled" class="icon-button" title="Use center as reference" [value]="true" ><mat-icon>filter_center_focus</mat-icon></mat-button-toggle>
+                                </mat-button-toggle-group>
+                            </mat-grid-tile>
+                            <mat-grid-tile>
+                                <button mat-raised-button [disabled]="disabled" class="icon-button" title="Rotate ccw" (click)="rotateClicked(1)"><mat-icon>rotate_left</mat-icon></button>
+                                <button mat-raised-button [disabled]="disabled" class="icon-button" title="Rotate cw" (click)="rotateClicked(-1)"><mat-icon>rotate_right</mat-icon></button>
+                            </mat-grid-tile>
+                            <mat-grid-tile>
+                                <button mat-raised-button [disabled]="disabled" class="icon-button" title="Mirror vertical" (click)="mirrorClicked(1)"><mat-icon>swap_vert</mat-icon></button>
+                                <button mat-raised-button [disabled]="disabled" class="icon-button" title="Mirror horizontal" (click)="mirrorClicked(2)"><mat-icon>swap_horiz</mat-icon></button>
+                            </mat-grid-tile>
+                            <mat-grid-tile>
+                                <mat-button-toggle-group [(ngModel)]="mode">
+                                    <mat-button-toggle [disabled]="disabled" class="icon-button" title="Image" value="image" (change)="imageSelected()"><mat-icon>image</mat-icon></mat-button-toggle>
+                                    <mat-button-toggle [disabled]="disabled" class="icon-button" title="Text" value="text" (change)="textSelected()"><mat-icon>title</mat-icon></mat-button-toggle>
+                                </mat-button-toggle-group>
+                            </mat-grid-tile>
+                        </mat-grid-list>
+                    </div>
+                    <div>
+                        <div  *ngIf="mode=='image'" class="inline">
+                            <mat-form-field class="numeric-field">
+                                <input matInput ngDefaultControl class="numericinput" type="number" min="-10" max="10" step="0.1"  title="Contrast between -10 and 10" 
+                                       [(ngModel)]="contrast" ngDefaultControl (ngModelChange)="this.contrastUpdate.next($event)">     
+                                       <mat-hint class="numerichint" align="start">Contrast</mat-hint>
+                            </mat-form-field>
+                            <div class="spacer"></div>
+                            <mat-form-field class="numeric-field">
+                                <input matInput ngDefaultControl class="numericinput" type="number" min="-10" max="10" step="0.1"  title="Brightness between -10 and 10" 
+                                       [(ngModel)]="brightness" ngDefaultControl (ngModelChange)="this.brightnessUpdate.next($event)">                            
+                                       <mat-hint class="numerichint" align="start">Brightness</mat-hint>
+                            </mat-form-field>
+                            <div class="spacer"></div>
+                        </div>
+                        <div  *ngIf="mode=='image'" class="upload inline">
+                            <image-upload [disabled]="disabled" [uploadURL]="'/image'" (completed)="updateImage()"></image-upload>
+                        </div>
+                        <div *ngIf="mode=='text'" class="inline">
+                            <mat-form-field class="nopadding" style="width:480px;">
+                                <textarea class="text-input" matInput [disabled]="disabled" [(ngModel)]="text" (ngModelChange)="this.textUpdate.next($event)" ></textarea>
+                                <button mat-button *ngIf="text" matSuffix mat-icon-button aria-label="Clear" (click)="text=''"><mat-icon>close</mat-icon></button>
+                            </mat-form-field>
+                            <div class="spacer"></div>
+                            <mat-form-field class="nopadding" style="width:320px;">
+                                <mat-select [disabled]="disabled"  [(value)]="selectedFont" (selectionChange)="fontChanged($event)">
+                                    <mat-option *ngFor="let f of fonts" [value]="f.file">
+                                        {{f.name}}
+                                </mat-option>
+                            </mat-select>
                         </mat-form-field>
-                    </mat-grid-tile>
-                    <mat-grid-tile><button mat-raised-button [disabled]="totalDisabled" title="Move x-axis {{moveDistance}} mm" class="icon-button" (click)="moveRight()"><mat-icon>chevron_right</mat-icon></button></mat-grid-tile>
-                    <mat-grid-tile colspan="2" class="b-left b-top">
-                        <mat-form-field class="size-m">
-                            <input matInput  class="distance" type="number" min="1" max="100" step="1" title="Laser power (1-100)" [(ngModel)]="power" />                             
-                            <mat-hint align="start">Laser Power  </mat-hint>
-                        </mat-form-field>                        
-                    </mat-grid-tile>
-                    <mat-grid-tile class="b-top">
-                        <button *ngIf="!status.engraving" mat-raised-button [disabled]="totalDisabled" class="icon-button" (click)="startEngrave()" title="Start engraving"><mat-icon>flash_on</mat-icon></button>
-                        <button *ngIf="status.engraving" mat-raised-button [disabled]="!status.engraving" class="icon-button" (click)="stopEngrave()" title="Stop engraving"><mat-icon>flash_on</mat-icon><mat-icon class="over">block</mat-icon></button>
-                    </mat-grid-tile>
+                    </div>
+                </div>
+            </div>
 
-                    <!-- row 3 -->
-                    <mat-grid-tile></mat-grid-tile>
-                    <mat-grid-tile><button mat-raised-button [disabled]="totalDisabled"  title="y-axis {{moveDistance}} mm" class="icon-button" (click)="moveDown()"><mat-icon>expand_more</mat-icon></button></mat-grid-tile>
-                    <mat-grid-tile></mat-grid-tile>
-                    <mat-grid-tile class="b-left" colspan="2">
-                        <mat-form-field class="size-m">
-                            <input matInput  class="distance" type="number" min="1" max="100" step="1" title="Engraving Depth (1-100)" [(ngModel)]="depth" />                             
-                            <mat-hint align="start">Depth</mat-hint>
-                        </mat-form-field>                        
-                    </mat-grid-tile>
-                    <mat-grid-tile></mat-grid-tile>
-                </mat-grid-list>
+            <div>
+                <div class="inline spacing">
+                    <size-input [label]="'max. Width'" [pxPerMm]="pxPerMm" [(value)]="width" (valueChange)="this.widthUpdate.next($event)"></size-input>
+                </div>
+                <div class="spacer"></div>
+                <div class="inline spacing">
+                    <size-input [label]="'max. Height'" [pxPerMm]="pxPerMm" [(value)]="height" (valueChange)="this.heightUpdate.next($event)"> </size-input>
+                </div>
             </div>
         </div>
-        <div></div>
-    </mat-card-content>
+    </div>
+
+</mat-card-content>
 </mat-card>
 
 <mat-card>
-    <mat-card-header >
-        <mat-card-title>
-            <div class="inline spacer">
-                <mat-button-toggle-group [(ngModel)]="useCenter">
-                    <mat-button-toggle [disabled]="disabled" class="icon-button" title="Use top-left as reference" [value]="false" ><mat-icon style="transform: scale(-1,1)">open_in_new</mat-icon></mat-button-toggle>
-                    <mat-button-toggle [disabled]="disabled" class="icon-button" title="Use center as reference" [value]="true" ><mat-icon>filter_center_focus</mat-icon></mat-button-toggle>
-                </mat-button-toggle-group>
-            </div>
-            <div class="inline">
-                <mat-button-toggle-group [(ngModel)]="mode">
-                    <mat-button-toggle [disabled]="disabled" class="icon-button" title="Image" value="image" (change)="imageSelected()"><mat-icon>image</mat-icon></mat-button-toggle>
-                    <mat-button-toggle [disabled]="disabled" class="icon-button" title="Text" value="text" (change)="textSelected()"><mat-icon>title</mat-icon></mat-button-toggle>
-                </mat-button-toggle-group>
-            </div>
-            <div class="spacer"></div>
-            <div class="inline spacer">
-                <button mat-raised-button [disabled]="disabled" class="icon-button" title="Rotate ccw" (click)="rotateClicked(1)"><mat-icon>rotate_left</mat-icon></button>
-                <button mat-raised-button [disabled]="disabled" class="icon-button" title="Rotate cw" (click)="rotateClicked(-1)"><mat-icon>rotate_right</mat-icon></button>
-            </div>
-            <div class="inline spacer">
-                <button mat-raised-button [disabled]="disabled" class="icon-button" title="Mirror vertical" (click)="mirrorClicked(1)"><mat-icon>swap_vert</mat-icon></button>
-                <button mat-raised-button [disabled]="disabled" class="icon-button" title="Mirror horizontal" (click)="mirrorClicked(2)"><mat-icon>swap_horiz</mat-icon></button>
-            </div>
-            <div class="spacer"></div>
 
-            <div  *ngIf="mode=='image'" class="upload inline">
-                <image-upload [disabled]="disabled" [uploadURL]="'/image'" (completed)="updateImage()"></image-upload>
-            </div>
-            <div *ngIf="mode=='text'" class="inline">
-                <mat-form-field class="nopadding" style="width:480px;">
-                    <textarea class="text-input" matInput [disabled]="disabled" [(ngModel)]="text" (ngModelChange)="this.textUpdate.next($event)" ></textarea>
-                           <button mat-button *ngIf="text" matSuffix mat-icon-button aria-label="Clear" (click)="text=''"><mat-icon>close</mat-icon></button>
-                </mat-form-field>
-                <div class="spacer"></div>
-                <mat-form-field class="nopadding" style="width:320px;">
-                    <mat-select [disabled]="disabled"  [(value)]="selectedFont" (selectionChange)="fontChanged($event)">
-                        <mat-option *ngFor="let f of fonts" [value]="f.file">
-                            {{f.name}}
-                    </mat-option>
-                </mat-select>
-            </mat-form-field>
+    <mat-card-content>
+        <div class="spacing">
+            <image-display [center]="useCenter"></image-display>
         </div>
-
-    </mat-card-title>
-</mat-card-header>
-
-
-<mat-card-content>
-    <div class="inline spacing">
-        <size-input [label]="'max. Width'" [pxPerMm]="pxPerMm" [(value)]="width" (valueChange)="this.widthUpdate.next($event)"></size-input>
-    </div>
-    <div class="spacer"></div>
-    <div class="inline spacing">
-        <size-input [label]="'max. Height'" [pxPerMm]="pxPerMm" [(value)]="height" (valueChange)="this.heightUpdate.next($event)"> </size-input>
-    </div>
-    <div class="spacing">
-        <image-display [center]="useCenter"></image-display>
-    </div>
-</mat-card-content>
+    </mat-card-content>
 
 </mat-card>
 

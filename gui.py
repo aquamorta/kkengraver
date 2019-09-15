@@ -64,9 +64,10 @@ STATUS_CODES = [1000, 1001, 1002, 1003, 1007, 1008, 1009, 1010, 1011, 3000, 3999
 STORAGE={}
 
 def StoreImage(fd):
+    global args
     img=Image.open(fd)
     img.load()
-    img=EngraverData.preprocessImage(img)
+    img=EngraverData.preprocessImage(img,args)
     STORAGE['image']=img
     
 
@@ -528,6 +529,12 @@ class GUIHandler(SimpleHTTPRequestHandler):
             img=EngraverData.imageFromText(args)
             STORAGE['textimage']=img
         args.trf=parseTrf(dict.get('trf',[None])[0])
+        args.contrast=dict.get('contrast')
+        if args.contrast:
+            args.contrast=float(args.contrast)
+        args.brightness=dict.get('brightness')
+        if args.brightness:
+            args.brightness=float(args.brightness)
         self.SendImage(EngraverData._trfImage(img.copy(),args))
         
     def RenderImage(self,dict):
@@ -567,6 +574,7 @@ class GUIHandler(SimpleHTTPRequestHandler):
 
     
     def SaveImage(self):
+        global args
         content_length = int(self.headers['Content-Length'])
         ctype, pdict = cgi.parse_header(self.headers['Content-Type'])
         if ctype == 'multipart/form-data':
@@ -889,6 +897,9 @@ parser.add_argument('-P', '--port',metavar="port",help='use the given port',
 parser.add_argument('-T','--transform', help=argparse.SUPPRESS,dest='trf')
 parser.add_argument('--dry-run',dest='dummy', help=argparse.SUPPRESS)
 parser.add_argument('--invert',dest='invert', help=argparse.SUPPRESS,default=False,action='store_true')
+parser.add_argument('--brightness',dest='brightness', help=argparse.SUPPRESS,default=None)
+parser.add_argument('--contrast',dest='contrast', help=argparse.SUPPRESS,default=None)
+
 args = parser.parse_args()
 
 
@@ -899,13 +910,13 @@ if args.browser!='-':
         host='localhost'
     UrlOpener(args.browser,host,args.port).start()
 
-StoreImage('web/logo.png')
 httpd = Httpd(args.bind,args.port)
 httpd.Register(StdoutClient())
 Logger.set(ExternalLogger(args.verbosity,httpd))
 engraver=Engraver(args)
 worker=Worker(engraver,httpd)
 httpd.SetMessageHandler(worker)
+StoreImage('web/logo.png')
 worker.start()
 httpd.Loop()
 

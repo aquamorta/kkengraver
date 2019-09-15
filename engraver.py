@@ -296,7 +296,7 @@ class EngraverData(Base):
         return im
 
     @staticmethod
-    def preprocessImage(im):
+    def preprocessImage(im,args):
         if im.mode=='P': # convert file with color palette (e.g. gif with transparency)
             im=im.convert('RGBA')
         if im.mode=='RGBA': # replace transparent pixels with white
@@ -308,7 +308,7 @@ class EngraverData(Base):
     def fromImage(args):
         im=Image.open(args.image)
         im.load()
-        im=EngraverData.preprocessImage(im)
+        im=EngraverData.preprocessImage(im,args)
         return EngraverData._imageToData(im,args)
 
     @staticmethod
