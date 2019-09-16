@@ -1,7 +1,7 @@
 
 <mat-card>
     <mat-card-header>
-        <mat-card-title>KKEngraver</mat-card-title>
+        <mat-card-title>KKEngraver {{version}}</mat-card-title>
     </mat-card-header>
     <mat-card-content>
 
@@ -80,6 +80,12 @@
                     <div style="width:92px;height:186px">
                         <mat-grid-list cols="1" rows="4" rowHeight="2:1" [gutterSize]="0" >
                             <mat-grid-tile>
+                                <mat-button-toggle-group [(ngModel)]="mode">
+                                    <mat-button-toggle [disabled]="disabled" class="icon-button" title="Image" value="image" (change)="imageSelected()"><mat-icon>image</mat-icon></mat-button-toggle>
+                                    <mat-button-toggle [disabled]="disabled" class="icon-button" title="Text" value="text" (change)="textSelected()"><mat-icon>title</mat-icon></mat-button-toggle>
+                                </mat-button-toggle-group>
+                            </mat-grid-tile>
+                            <mat-grid-tile>
                                 <mat-button-toggle-group [(ngModel)]="useCenter">
                                     <mat-button-toggle [disabled]="disabled" class="icon-button" title="Use top-left as reference" [value]="false" ><mat-icon style="transform: scale(-1,1)">open_in_new</mat-icon></mat-button-toggle>
                                     <mat-button-toggle [disabled]="disabled" class="icon-button" title="Use center as reference" [value]="true" ><mat-icon>filter_center_focus</mat-icon></mat-button-toggle>
@@ -92,12 +98,6 @@
                             <mat-grid-tile>
                                 <button mat-raised-button [disabled]="disabled" class="icon-button" title="Mirror vertical" (click)="mirrorClicked(1)"><mat-icon>swap_vert</mat-icon></button>
                                 <button mat-raised-button [disabled]="disabled" class="icon-button" title="Mirror horizontal" (click)="mirrorClicked(2)"><mat-icon>swap_horiz</mat-icon></button>
-                            </mat-grid-tile>
-                            <mat-grid-tile>
-                                <mat-button-toggle-group [(ngModel)]="mode">
-                                    <mat-button-toggle [disabled]="disabled" class="icon-button" title="Image" value="image" (change)="imageSelected()"><mat-icon>image</mat-icon></mat-button-toggle>
-                                    <mat-button-toggle [disabled]="disabled" class="icon-button" title="Text" value="text" (change)="textSelected()"><mat-icon>title</mat-icon></mat-button-toggle>
-                                </mat-button-toggle-group>
                             </mat-grid-tile>
                         </mat-grid-list>
                     </div>

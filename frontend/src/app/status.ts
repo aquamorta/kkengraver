@@ -2,6 +2,7 @@ import {Generic} from './generic';
 
 export class Status extends Generic{
     constructor(
+        public version="unknown",
         public connected=false,
         public busy=false,
         public fanOn=true,

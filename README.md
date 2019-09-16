@@ -361,7 +361,7 @@ control the gui of the engraver. The default port is `8008`. You can change it w
 After starting `gui.py` your default browser should show a new window/tab with the GUI.
 Here you can see the screen opened with the chromium browser.
 
-![screenshot with chromium browser](images/screen.png "Main Screen")
+![screenshot with chromium browser](web/images/screen.png "Main Screen")
 
 In the top section you can see many buttons to control the engraver:
 

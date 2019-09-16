@@ -454,7 +454,7 @@ class Engraver(Base):
         self.connected=True
         self._check()
         self.debug("...connected!")
-        self.info("Firmware version:%s\n",self.firmware)
+        self.info("Firmware version detected:%s\n",self.firmware)
 
     def home(self):
         self.send(self.HOME)
@@ -598,16 +598,16 @@ def contrastBrightnessValue(para):
 ########################################################################
 
     
-    
+VERSION="0.9.6"    
     
 
 DESCRIPTION="""
 Engraver program for using a KKMoon laser engraver
-V0.9.6 (c) 2019 by Bernd Breitenbach
+V{} (c) 2019 by Bernd Breitenbach
 This program comes with ABSOLUTELY NO WARRANTY.
 This is free software, and you are welcome to redistribute it
 under certain conditions; See COPYING for details.
-"""
+""".format(VERSION)
 
 if __name__ == '__main__':
     

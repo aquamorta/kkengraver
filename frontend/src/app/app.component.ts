@@ -13,6 +13,7 @@ import {ImageDisplayComponent} from './image-display/image-display.component';
 })
 export class AppComponent implements OnInit, AfterViewInit {
 
+    version:string="";
 
     locked: boolean = false;
 
@@ -128,6 +129,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     }
 
     statusHandler(status: Status) {
+        this.version = status.version;
         this.locked = false;
         this.status = status;
         this.disabled = status.engraving || status.framing;

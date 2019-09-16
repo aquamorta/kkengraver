@@ -39,7 +39,7 @@ from PIL import Image,ImageDraw,ImageFont
 from urllib.parse import parse_qs
 from io import BytesIO
 
-from engraver import Logger,Engraver,EngraverData,DESCRIPTION,unitValue,imageTrf,UI,contrastBrightnessValue
+from engraver import Logger,Engraver,EngraverData,DESCRIPTION,VERSION,unitValue,imageTrf,UI,contrastBrightnessValue
 
 ##############################################################################
 FONTDIR='fonts'
@@ -761,16 +761,18 @@ class Worker(threading.Thread):
         self.setDaemon(True)
 
     def connect(self,engraver):
-        engraver.open()
-        if engraver.isOpened():
-            engraver.connect()
-            engraver.fan(True)
+        if not engraver.isOpened():
+            engraver.open()
+            if engraver.isOpened():
+                engraver.connect()
+                engraver.fan(True)
             
     def disconnect(self,engraver):
         engraver.close()
     
     def status(self,engraver):
-        return {'type':'status',
+        return {'version':VERSION,
+               'type':'status',
                'connected':engraver.isOpened(),
                'engraving':self.engraving,
                'framing':self.framing,
