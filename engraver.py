@@ -633,9 +633,9 @@ if __name__ == '__main__':
     parser.add_argument('--checkerboard',help='engrave a quadratic checkerboard pattern of given tile size and number',
                         metavar=('tile_size','number'),type=unitValue,dest='checker',nargs=2,default=None)
     parser.add_argument('-i','--image',metavar='imagefile', help='the image file to engrave')
-    parser.add_argument('--contrast',metavar='number', help='adjust the contrast of the image [-10,10]',
+    parser.add_argument('--contrast',metavar='number', help='adjust the contrast of the image (-10..10)',
                         type=contrastBrightnessValue,default=None)
-    parser.add_argument('--brightness',metavar='number', help='adjust the brightness of the image [-10,10]',
+    parser.add_argument('--brightness',metavar='number', help='adjust the brightness of the image (-10..10)',
                         type=contrastBrightnessValue,default=None)
     parser.add_argument('-t','--text',metavar='text', help='the text to engrave; you also have to specify a font with the --font option')
     parser.add_argument('--font',metavar='font', help='the truetype/opentype font used to engrave text')
