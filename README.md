@@ -22,13 +22,16 @@ in a browser tab/window.
 You can get a short help by just typing: `python3 engraver.py -h` or `./engraver.py -h`
 if you have made it executable.
 
-    usage: engraver [-h] [-d device] [-s speed] [-v] [--fan] [--no-fan] [-m x:y]
-                    [-f x:y] [-F imagefile] [-c x|y] [-H] [-D depth] [-P power]
-                    [--checkerboard tile_size number] [-i imagefile] [-t text]
-                    [--font font] [-T cw|ccw|turn|tb|lr [cw|ccw|turn|tb|lr ...]]
-                    [-S w:h] [--invert] [--limit steps] [--dry-run [imagefile]]
+
+    usage: engraver.py [-h] [-d device] [-s speed] [-v] [--fan] [--no-fan]
+                       [-m x:y] [-f x:y] [-F imagefile] [-c x|y] [-H] [-C]
+                       [-D depth] [-P power] [--checkerboard tile_size number]
+                       [-i imagefile] [--contrast number] [--brightness number]
+                       [-t text] [--font font]
+                       [-T cw|ccw|turn|tb|lr [cw|ccw|turn|tb|lr ...]] [-S w:h]
+                       [--invert] [--limit steps] [--dry-run [imagefile]]
     
-    Engraver program for using a KKMoon laser engraver V0.9 (c) 2019 by Bernd
+    Engraver program for using a KKMoon laser engraver V0.9.6 (c) 2019 by Bernd
     Breitenbach This program comes with ABSOLUTELY NO WARRANTY. This is free
     software, and you are welcome to redistribute it under certain conditions; See
     COPYING for details.
@@ -65,6 +68,10 @@ if you have made it executable.
                             size and number (default: None)
       -i imagefile, --image imagefile
                             the image file to engrave (default: None)
+      --contrast number     adjust the contrast of the image (-10..10) (default:
+                            None)
+      --brightness number   adjust the brightness of the image (-10..10) (default:
+                            None)
       -t text, --text text  the text to engrave; you also have to specify a font
                             with the --font option (default: None)
       --font font           the truetype/opentype font used to engrave text
@@ -90,6 +97,7 @@ if you have made it executable.
     All distances and sizes can be specified in steps or millimeter by just adding
     mm to a given number. The KKMoon engraver has a resolution of 500 steps/inch
     (19.685.. steps/mm)
+    
     
 Before sending any commands to the KKMoon engraver you have to power it up and connect
 it to the computer. Depending on your OS you may have to install a driver for the serial device.
@@ -267,7 +275,7 @@ is very useful for setting the maximum height or width of the engraving.
 With the `--font` you have to specify a TrueType or OpenType font file. 
 
 The command `./engraver.py -t "Hello!" --font fonts/arial.ttf -S 25mm:10mm -d /dev/ttyUSB0`
-engraves the word 'Hello' using the font arial.ttf in the subdirectory fonts and the
+engraves the word 'Hello' using the font arial.ttf in the subdirectory fonts and
 with the maximal dimensions of 25mm in x direction and 10mm in y direction.
 
 I do not provide any fonts with this program. You can find a lot by searching the internet
@@ -284,6 +292,18 @@ first rotates the text clockwise and afterwards mirrors it about the y axis (fli
 
 Note: the scaling with `-S` happens *before* tranforming. So in the above example 25mm is the maximal length of
 the text image and 10mm its maximal height.
+
+#### Contrast & Brightness
+
+You can specify contrast and brightness adjustments for an image between -10 and 10.
+Positive values increase contrast/brightness. Negative values decreases them.
+
+Note: these values only makes sense if the original image is of a multicolor or grayscale type.
+If you use a black/white image they are useless.
+
+Finally the image always gets converted to a black/white image by dithering, because the engraver
+can not handle grayscale values.
+
 
 #### Dry run
 
