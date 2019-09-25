@@ -31,7 +31,7 @@ if you have made it executable.
                        [-T cw|ccw|turn|tb|lr [cw|ccw|turn|tb|lr ...]] [-S w:h]
                        [--invert] [--limit steps] [--dry-run [imagefile]]
     
-    Engraver program for using a KKMoon laser engraver V0.9.6 (c) 2019 by Bernd
+    Engraver program for using a KKMoon laser engraver V0.9.7 (c) 2019 by Bernd
     Breitenbach This program comes with ABSOLUTELY NO WARRANTY. This is free
     software, and you are welcome to redistribute it under certain conditions; See
     COPYING for details.
@@ -322,12 +322,12 @@ entering `n` followed by a return.
 
 ## GUI
 
-The graphical user interface can startet by entering `./gui.py`. You can get a help by adding `-h`:
+The graphical user interface can be started by entering `./gui.py`. You can get a help by adding `-h`:
 
     usage: gui.py [-h] [-d device] [-s speed] [-v] [--limit steps] [-b browser]
                   [-B bind] [-P port]
     
-    Engraver program for using a KKMoon laser engraver V0.9.1 (c) 2019 by Bernd
+    Engraver program for using a KKMoon laser engraver V0.9.7 (c) 2019 by Bernd
     Breitenbach This program comes with ABSOLUTELY NO WARRANTY. This is free
     software, and you are welcome to redistribute it under certain conditions; See
     COPYING for details.
@@ -428,7 +428,8 @@ H. Upload an image to engrave
 
 A. Enter your text to engrave
 
-B. Select a font
+B. Select a font from the ones residing in the `fonts` directory.
+   You can copy any truetype font into this directory.
 
 
 
