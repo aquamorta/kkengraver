@@ -365,8 +365,70 @@ Here you can see the screen opened with the chromium browser.
 
 In the top section you can see many buttons to control the engraver:
 
-![screenshot with chromium browser](images/image1.png "Connect")
+### Engraver settings
 
+![screenshot with chromium browser](images/image1.png "Engraver Commands")
+
+A. You can connect/disconnect to the engraver. If not connected most of the
+   buttons are disabled.
+
+B. Here you can switch on/off the engraverfan
+
+C. Move the laser to the home position
+
+D. Move the laser in the given direction
+
+E. The length the laser is moved by the direction buttons [D] (0.1-10mm)
+
+F. Show a preview line of the horizontal engraving dimension
+
+G. Show a preview line of the vertical engraving dimension 
+
+H. Show a preview frame of the engraving dimensions
+
+I. Specify the laser power (1-100)
+
+J. Specify the engraving depth (1-100)
+
+K. Start the engraving. If pressed, most buttons are disabled until the
+   engraving process is finished or canceled.
+
+### Image settings
+
+![screenshot with chromium browser](images/image2.png "Image Commands")
+
+A. Switch between image and text mode
+
+B. Toggle the reference point for engraving between top-left (default)
+   and center. If center is selected the image will be engraved symmetrically
+   around the center point.
+
+C. Rotate the image counter-clockwise respectivly clockwise
+
+D. Flip the image horizontally respectivly vertically
+
+E. Here you can specify the maximum width respectivly height of the image.
+   The aspect ratio of the image is always kept. So mostly only one of the
+   values restrict the size of the image. Note: you cannot enlarge an image beyond
+   its give size by entering large values. Normally you enter the size in pixel
+   value but you can type 'mm' after the number and the it is taken as
+   a mm-value and converted to the correct pixel value.
+
+F. Enter a contrast value (-10..10) 0 means no change.
+
+G. Enter a brightness value (-10..10) 0 means no change.
+
+Note: only color or grayscale images are affected by contrast/brightness settings
+
+H. Upload an image to engrave
+
+### Text settings
+
+![screenshot with chromium browser](images/image3.png "Text Options")
+
+A. Enter your text to engrave
+
+B. Select a font
 
 
 
