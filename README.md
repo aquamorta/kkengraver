@@ -367,7 +367,7 @@ In the top section you can see many buttons to control the engraver:
 
 ### Engraver settings
 
-![screenshot with chromium browser](images/image1.png "Engraver Commands")
+![screenshot with chromium browser](web/images/image1.png "Engraver Commands")
 
 A. You can connect/disconnect to the engraver. If not connected most of the
    buttons are disabled.
@@ -395,7 +395,7 @@ K. Start the engraving. If pressed, most buttons are disabled until the
 
 ### Image settings
 
-![screenshot with chromium browser](images/image2.png "Image Commands")
+![screenshot with chromium browser](web/images/image2.png "Image Commands")
 
 A. Switch between image and text mode
 
@@ -424,7 +424,7 @@ H. Upload an image to engrave
 
 ### Text settings
 
-![screenshot with chromium browser](images/image3.png "Text Options")
+![screenshot with chromium browser](web/images/image3.png "Text Options")
 
 A. Enter your text to engrave
 
