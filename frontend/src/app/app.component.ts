@@ -43,7 +43,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
     xyCenter: string[] = [];
 
-    xyCenterSaved: string = undefined;
+    xyCenterSaved: string = "";
 
     widthUpdate = new Subject<string>();
 
@@ -245,11 +245,13 @@ export class AppComponent implements OnInit, AfterViewInit {
     }
 
     frame() {
+        let args = {'fx': this.imageDisplay.imageWidth, 'fy': this.imageDisplay.imageHeight, 'useCenter': this.useCenter, 'centerAxis': this.xyCenterSaved};
+        console.log(args);
         if (this.xyCenter[0] != undefined) {
             this.xyCenterSaved = this.xyCenter[0];
-            this.send({'cmd': 'frameStart', 'args': {'fx': this.width, 'fy': this.height, 'useCenter': this.useCenter, 'centerAxis': this.xyCenterSaved}});
+            this.send({'cmd': 'frameStart', 'args': args});
         } else {
-            this.send({'cmd': 'frameStop', 'args': {'fx': this.width, 'fy': this.height, 'useCenter': this.useCenter, 'centerAxis': this.xyCenterSaved}});
+            this.send({'cmd': 'frameStop', 'args': args});
             this.xyCenterSaved = null;
         }
     }

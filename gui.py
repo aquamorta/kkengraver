@@ -75,7 +75,7 @@ class Websocket(object):
     def __init__(self,socket,registry):
         self.socket=socket
         self.registry=registry
-        self.fileno=socket.fileno
+        self.fileno=lambda s=self: s.socket
         self.fin = 0
         self.data = bytearray()
         self.opcode = 0
@@ -101,7 +101,7 @@ class Websocket(object):
         self.registry.Register(self)
     
     def DoRead(self):
-        msg=os.read(self.fileno(),16384)
+        msg=self.socket.recv(16384)
         if msg:
             for d in msg:
                 self.DecodeMessage(d)
@@ -110,7 +110,7 @@ class Websocket(object):
                  
     def DoClose(self):
         print ('websocket closed',self.fileno())
-        os.close(self.fileno())
+        self.socket.close()
         self.registry.Unregister(self)
 
         
@@ -558,7 +558,8 @@ class GUIHandler(SimpleHTTPRequestHandler):
         if len(l)>1: dict=parse_qs(l[1])
         f=self.pathtofunc.get(l[0])
         if not f:
-            self.path='%sweb%s'%(os.sep,self.path)
+            self.path='/web%s'%self.path
+            self.log_message("path:'%s' => '%s'",self.path,self.translate_path(self.path))
             if self.translate_path(self.path).startswith(os.getcwd()+os.sep+'web'):
                 SimpleHTTPRequestHandler.do_GET(self)
             else:
@@ -647,12 +648,13 @@ class Httpd(HTTPServer):
         if self.do_close:
             HTTPServer.shutdown_request(self,request)
         else:
-            print ("keep open",self.do_close,request.fileno())
+            print ("do close:",self.do_close,request.fileno())
         self.do_close=True
 
 
     def Register(self,client):
-        self.listeners[client.fileno()]=client
+        if client.fileno()!=None:
+            self.listeners[client.fileno()]=client
 
     def Unregister(self,listener):
         if type(listener)!=int:
@@ -708,7 +710,7 @@ class StdoutClient(object):
         os.read(1,16384)
 
     def fileno(self): 
-        return 1
+        return None
 
 class ExternalLogger(Logger):
     def __init__(self,verbosity,channel):
