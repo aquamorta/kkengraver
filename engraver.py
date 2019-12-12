@@ -667,7 +667,7 @@ if __name__ == '__main__':
         args.image=args.image_frame
         args.frame=EngraverData.imageFrame(args)
     if args.frame:
-        engraver.frame(*args.frame,args.center,args.centerref)
+        engraver.frame(*args.frame,args.centerref,args.center)
     elif args.checker:
         data=EngraverData.checkerboard(args)
     elif args.image:
