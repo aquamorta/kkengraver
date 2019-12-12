@@ -27,6 +27,10 @@ export class ImageDisplayComponent implements OnInit, AfterViewInit {
 
     @Input()
     pxPerMm = 500. / 25.4
+    
+    imageWidth=0;
+    
+    imageHeight=0;
 
     private _center = false;
 
@@ -146,6 +150,9 @@ export class ImageDisplayComponent implements OnInit, AfterViewInit {
         overlay.height = canvas.height;
         this.outerHeight = overlay.height;
 
+        this.imageWidth = img.width;
+        this.imageHeight = img.height;
+        
         var ctx = canvas.getContext('2d');
         var f = 1;
         while ((img.width / f + this.margin) > canvas.width || (img.height / f + this.margin) > canvas.height) {
