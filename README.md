@@ -17,7 +17,7 @@ feature the Windows software that came with the engraver has.
 `gui.py` is a graphical user interface implemented as a web frontend. It runs
 in a browser tab/window.
 
-##CLI engraver.py
+## CLI engraver.py
 
 You can get a short help by just typing: `python3 engraver.py -h` or `./engraver.py -h`
 if you have made it executable.
