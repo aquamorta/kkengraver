@@ -3,7 +3,7 @@ import {EngraverService} from './engraver.service';
 import {Message, Command, Status, Font} from '.';
 import {MatBottomSheet} from '@angular/material/bottom-sheet';
 import {Subject} from 'rxjs';
-import {debounceTime, distinctUntilChanged, map} from 'rxjs/operators';
+import {debounceTime, distinctUntilChanged} from 'rxjs/operators';
 import {ImageDisplayComponent} from './image-display/image-display.component';
 
 @Component({
