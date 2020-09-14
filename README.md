@@ -432,6 +432,11 @@ B. Select a font from the ones residing in the `fonts` directory.
    You can copy any truetype font into this directory.
 
 
+## Supported models
+
+Currently this software is tested and works with a KKMoon 3000 (3 Watts power). 
+It may or may not work with other models from KKMoon.
+
 
 
 
