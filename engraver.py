@@ -598,7 +598,7 @@ def contrastBrightnessValue(para):
 ########################################################################
 
     
-VERSION="0.9.10"    
+VERSION="0.10"    
     
 
 DESCRIPTION="""

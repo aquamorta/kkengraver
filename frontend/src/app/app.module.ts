@@ -4,7 +4,6 @@ import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import {HttpClientModule} from '@angular/common/http';
 import {NgModule} from '@angular/core';
 import {FormsModule} from '@angular/forms';
-import 'hammerjs';
 import {AppComponent} from './app.component';
 import {MAT_RIPPLE_GLOBAL_OPTIONS} from '@angular/material/core/';
 import {MatButtonModule} from '@angular/material/button/';
